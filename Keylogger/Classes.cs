@@ -10,9 +10,6 @@ using System.Drawing;
 using System.Windows.Interop;
 using System.Collections.Generic;
 using System.Diagnostics;
-using iTextSharp.text;
-using iTextSharp.text.pdf;
-using Font = System.Drawing.Font;
 
 
 namespace Keylogger
