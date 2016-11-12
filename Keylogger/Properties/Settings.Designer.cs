@@ -82,5 +82,29 @@ namespace Keylogger.Properties {
                 this["txtBoxMailProp"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int timeScreenProp {
+            get {
+                return ((int)(this["timeScreenProp"]));
+            }
+            set {
+                this["timeScreenProp"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int timeMailProp {
+            get {
+                return ((int)(this["timeMailProp"]));
+            }
+            set {
+                this["timeMailProp"] = value;
+            }
+        }
     }
 }

