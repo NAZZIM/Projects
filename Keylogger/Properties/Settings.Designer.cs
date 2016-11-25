@@ -25,7 +25,7 @@ namespace Keylogger.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool AutoRunProp {
             get {
                 return ((bool)(this["AutoRunProp"]));
@@ -73,7 +73,7 @@ namespace Keylogger.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
         public string txtBoxMailProp {
             get {
                 return ((string)(this["txtBoxMailProp"]));

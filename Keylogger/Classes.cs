@@ -430,11 +430,7 @@ namespace Keylogger
 
     }
 
-    #endregion
-
-    #region ZIP
-    
-    #endregion
+    #endregion    
 
     public enum WindowsHotKey
     {

