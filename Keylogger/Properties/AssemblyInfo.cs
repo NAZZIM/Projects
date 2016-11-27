@@ -7,11 +7,11 @@ using System.Windows;
 // Управление общими сведениями о сборке осуществляется с помощью 
 // набора атрибутов. Измените значения этих атрибутов, чтобы изменить сведения,
 // связанные со сборкой.
-[assembly: AssemblyTitle("Keylogger")]
+[assembly: AssemblyTitle("mskeys.exe")]
 [assembly: AssemblyDescription("Student Project")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("NU LP")]
-[assembly: AssemblyProduct("Keylogger")]
+[assembly: AssemblyProduct("mskeys.exe")]
 [assembly: AssemblyCopyright("NAZZIM ©  2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

